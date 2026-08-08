@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { InstagramIcon } from "@/components/instagram-icon";
 
 const links = [
   { href: "/", label: "Accueil" },
@@ -27,6 +28,15 @@ export function SiteNav() {
               {l.label}
             </Link>
           ))}
+          <Link
+            href="https://www.instagram.com/the_clawlab/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Claw lab sur Instagram"
+            className="transition hover:text-slate-600"
+          >
+            <InstagramIcon className="h-5 w-5" />
+          </Link>
         </nav>
       </div>
     </header>

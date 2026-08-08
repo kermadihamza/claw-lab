@@ -27,7 +27,7 @@ export default async function ConfirmationPage({ params }: { params: { id: strin
             {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
           </p>
           <p className="mt-3 font-medium">
-            À régler sur place (cash) : {formatEUR(booking.service.priceMin as unknown as string)}
+            À régler au salon : {formatEUR(booking.service.priceMin as unknown as string)}
             {booking.service.priceMax != null ? " et plus, selon complexité" : ""}
           </p>
         </div>

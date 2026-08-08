@@ -52,7 +52,7 @@ const config: Config = {
         chrome:
           "linear-gradient(135deg, #f4f5f6 0%, #c9ced4 22%, #8a929c 45%, #eef0f1 60%, #a9b0b9 78%, #f4f5f6 100%)",
         "chrome-dark":
-          "linear-gradient(135deg, #dfe3e6 0%, #9aa2ab 25%, #5c636c 50%, #c4c9ce 65%, #7d8590 82%, #dfe3e6 100%)",
+          "linear-gradient(180deg, #ffffff 0%, #cfd3d6 15%, #6b7278 35%, #22252a 50%, #6b7278 65%, #cfd3d6 85%, #ffffff 100%)",
       },
     },
   },

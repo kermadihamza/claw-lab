@@ -41,10 +41,10 @@ export function bookingConfirmationEmail(params: {
 ${serviceName}
 ${formatDateLong(startTime)}
 ${formatTime(startTime)} - ${formatTime(endTime)}
-À régler sur place (cash) : ${priceLabel}
+À régler au salon : ${priceLabel}
 
 Blancaa Institut — ${address}
-Paiement en cash au salon. Un empêchement ? Contactez-nous pour annuler ou déplacer votre créneau.
+Paiement au salon. Un empêchement ? Contactez-nous pour annuler ou déplacer votre créneau.
 
 Ajouter au calendrier : ${calendarUrl(bookingId)}`;
 
@@ -73,7 +73,7 @@ Ajouter au calendrier : ${calendarUrl(bookingId)}`;
                 <p style="margin:0;font-size:17px;font-weight:700;font-family:Georgia,serif;color:#20242c;">${serviceName}</p>
                 <p style="margin:12px 0 0;text-transform:capitalize;">${formatDateLong(startTime)}</p>
                 <p style="margin:4px 0 0;">${formatTime(startTime)} - ${formatTime(endTime)}</p>
-                <p style="margin:16px 0 0;font-weight:700;">À régler sur place (cash) : ${priceLabel}</p>
+                <p style="margin:16px 0 0;font-weight:700;">À régler au salon : ${priceLabel}</p>
               </td>
             </tr>
           </table>
@@ -83,7 +83,7 @@ Ajouter au calendrier : ${calendarUrl(bookingId)}`;
       <tr>
         <td style="padding-top:28px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#454c5a;">
           <p style="margin:0;">Blancaa Institut — ${address}</p>
-          <p style="margin:8px 0 0;">Paiement en cash au salon. Un empêchement ? Contactez-nous pour annuler ou déplacer votre créneau.</p>
+          <p style="margin:8px 0 0;">Paiement au salon. Un empêchement ? Contactez-nous pour annuler ou déplacer votre créneau.</p>
         </td>
       </tr>
     </table>

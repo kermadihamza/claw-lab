@@ -111,7 +111,7 @@ export function InvoicePdfDocument({ data }: { data: InvoicePdfData }) {
 
         <Text style={styles.legal}>
           TVA non applicable, régime de la franchise de la taxe (article 56bis du Code de la TVA belge).{"\n"}
-          Montant payé comptant (cash) au salon.
+          Montant payé au salon.
         </Text>
       </Page>
     </Document>

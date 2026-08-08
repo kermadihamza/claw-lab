@@ -1,62 +1,57 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ChromeBlobBackground } from "@/components/chrome-blob-background";
+import { InstagramIcon } from "@/components/instagram-icon";
 
 export default function HomePage() {
   return (
-    <div className="relative overflow-hidden">
-      <ChromeBlobBackground />
-
-      <div className="relative mx-auto flex min-h-[88vh] max-w-5xl flex-col justify-center px-4 py-16 text-center sm:px-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-600 sm:text-sm">Nail art — Arlon</p>
-        <div className="relative">
-          <div className="absolute inset-0 -z-10 scale-150 bg-[radial-gradient(closest-side,rgba(250,247,240,0.9),transparent)] blur-2xl" />
-          <h1 className="mt-6 font-zoika text-6xl tracking-tight text-chrome sm:text-8xl md:text-9xl">
-            Claw lab
-          </h1>
-        </div>
-        <p className="mx-auto mt-6 max-w-xl text-balance text-base text-ink-light sm:text-lg">
-          Vernis semi-permanent, gainage sur ongle naturel, pose gel X et nail art sur-mesure, chez
-          Blancaa Institut à Arlon.
-        </p>
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link
-            href="/reserver"
-            className="w-full rounded-full bg-chrome px-8 py-3 font-semibold text-ink shadow-lg shadow-ink/10 transition hover:scale-[1.02] sm:w-auto"
-          >
-            Réserver un créneau
-          </Link>
-          <Link
-            href="/tarifs"
-            className="w-full rounded-full border border-ink/20 px-8 py-3 font-semibold text-ink transition hover:bg-ink/5 sm:w-auto"
-          >
-            Voir les tarifs
-          </Link>
-        </div>
+    <div
+      className="relative flex h-dvh flex-col items-center overflow-hidden px-6 text-center"
+      style={{
+        paddingTop: "max(2rem, env(safe-area-inset-top))",
+        paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
+      }}
+    >
+      <div className="relative flex flex-1 items-center justify-center">
+        <Image
+          src="/p.png"
+          alt="Claw lab"
+          width={545}
+          height={498}
+          priority
+          className="h-[40vh] max-h-[420px] w-auto animate-gentle-float lg:h-[46vh] lg:max-h-[520px]"
+        />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-24 sm:px-6">
-        <div className="grid gap-6 text-left sm:grid-cols-3">
-          {[
-            {
-              title: "Vernis semi-permanent",
-              desc: "Uni ou nail art, dépose comprise pour les décollements.",
-            },
-            {
-              title: "Gainage & Gel X",
-              desc: "Sur ongle naturel ou en capsules, du uni au nail art niveau 4.",
-            },
-            {
-              title: "Manucure japonaise",
-              desc: "Soin complet pour des ongles naturels sublimés.",
-            },
-          ].map((item) => (
-            <div key={item.title} className="card-frosted rounded-2xl p-6 shadow-lg">
-              <h2 className="font-display text-xl font-semibold">{item.title}</h2>
-              <p className="mt-2 text-sm text-ink-light">{item.desc}</p>
-            </div>
-          ))}
-        </div>
+      <p className="relative text-xs uppercase tracking-[0.3em] text-slate-600 sm:text-sm lg:text-base">
+        Nail art à Arlon
+      </p>
+      <h1 className="relative mt-2 font-zoika text-5xl text-chrome sm:text-6xl lg:text-7xl">Claw lab</h1>
+
+      <div className="relative mt-8 flex w-full max-w-xs flex-col gap-3 lg:max-w-sm">
+        <Link
+          href="/reserver"
+          className="w-full rounded-full bg-chrome px-8 py-4 font-semibold text-ink shadow transition hover:scale-[1.02] lg:py-5 lg:text-lg"
+        >
+          Réserver un créneau
+        </Link>
+        <Link
+          href="/tarifs"
+          className="w-full rounded-full border border-slate-300 bg-white px-8 py-4 font-semibold text-slate-700 transition hover:bg-slate-50 lg:py-5 lg:text-lg"
+        >
+          Voir les tarifs
+        </Link>
       </div>
+
+      <a
+        href="https://www.instagram.com/the_clawlab/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Claw lab sur Instagram"
+        className="relative mt-6 flex items-center gap-1.5 text-sm text-slate-600 transition hover:text-slate-700"
+      >
+        <InstagramIcon className="h-4 w-4" />
+        @the_clawlab
+      </a>
     </div>
   );
 }

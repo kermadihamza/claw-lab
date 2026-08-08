@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { formatEUR } from "@/lib/format";
+import { InstagramIcon } from "@/components/instagram-icon";
 import type { ServiceCategory } from "@prisma/client";
 
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
@@ -46,7 +47,7 @@ export default async function TarifsPage() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-3xl font-bold text-chrome sm:text-4xl">Prestations et tarifs</h1>
       <p className="mt-3 text-ink-light">
-        Paiement en cash au salon. Les durées indiquées incluent le temps de pose complet.
+        Paiement au salon. Les durées indiquées incluent le temps de pose complet.
       </p>
 
       <a
@@ -120,6 +121,16 @@ export default async function TarifsPage() {
           N&apos;hésitez pas à demander quel est le niveau de nail art de votre modèle.
         </p>
       </div>
+
+      <a
+        href="https://www.instagram.com/the_clawlab/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-10 flex items-center justify-center gap-2 rounded-full bg-chrome px-8 py-4 font-semibold text-ink shadow transition hover:scale-[1.02]"
+      >
+        <InstagramIcon className="h-5 w-5" />
+        Voir nos réalisations sur Instagram
+      </a>
     </div>
   );
 }
