@@ -21,6 +21,7 @@ const zoika = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
   title: "Claw lab — Arlon",
   description:
     "Claw lab, nail art à Arlon (Blancaa Institut). Vernis semi-permanent, gainage, gel X. Réservation en ligne.",
