@@ -3,25 +3,33 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #faf7f0;
+  --foreground: #20242c;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .text-chrome {
+    background-image: theme("backgroundImage.chrome");
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(32, 36, 44, 0.35);
+    filter: drop-shadow(0 2px 4px rgba(32, 36, 44, 0.25)) drop-shadow(0 10px 30px rgba(32, 36, 44, 0.2));
+  }
+
+  .card-frosted {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(32, 36, 44, 0.08);
+    color: #20242c;
+    backdrop-filter: blur(6px);
   }
 }

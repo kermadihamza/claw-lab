@@ -1,0 +1,144 @@
+// Claw Lab — schéma de données
+// Réservation client + back-office admin (facturation, dépenses, paramètres)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+}
+
+model Settings {
+  id                String  @id @default(cuid())
+  businessName      String  @default("Claw lab")
+  address           String  @default("16, rue des Capucins, 6700 Arlon")
+  tvaNumber         String?
+  bceNumber         String?
+  cotisationAmount  Decimal? @db.Decimal(10, 2)
+  bufferMinutes     Int     @default(10)
+  loyerMensuel      Decimal @default(350) @db.Decimal(10, 2)
+}
+
+enum ServiceCategory {
+  VERNIS_SEMI_PERMANENT
+  MANUCURE
+  GAINAGE
+  GEL_X
+}
+
+model Service {
+  id              String          @id @default(cuid())
+  category        ServiceCategory
+  name            String
+  priceMin        Decimal         @db.Decimal(10, 2)
+  priceMax        Decimal?        @db.Decimal(10, 2)
+  durationMinutes Int
+  active          Boolean         @default(true)
+  sortOrder       Int             @default(0)
+  bookings        Booking[]
+
+  @@index([category, sortOrder])
+}
+
+model BusinessHours {
+  id        String   @id @default(cuid())
+  dayOfWeek Int      @unique // 0 = dimanche ... 6 = samedi
+  isOpen    Boolean  @default(false)
+  openTime  String? // "09:00"
+  closeTime String? // "18:00"
+}
+
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  startTime DateTime @db.Timestamptz(3)
+  endTime   DateTime @db.Timestamptz(3)
+  reason    String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([startTime, endTime])
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  clientName  String
+  clientPhone String?
+  clientEmail String?
+  serviceId   String
+  service     Service       @relation(fields: [serviceId], references: [id])
+  startTime   DateTime      @db.Timestamptz(3)
+  endTime     DateTime      @db.Timestamptz(3)
+  status      BookingStatus @default(CONFIRMED)
+  notes       String?
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  invoice     Invoice?
+
+  @@index([startTime, endTime])
+}
+
+enum InvoiceStatus {
+  PAID
+  CANCELLED
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  number        String        @unique // format AAAA-0001
+  year          Int
+  sequence      Int
+  bookingId     String?       @unique
+  booking       Booking?      @relation(fields: [bookingId], references: [id])
+  clientName    String
+  clientAddress String?
+  issueDate     DateTime      @default(now()) @db.Timestamptz(3)
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  status        InvoiceStatus @default(PAID)
+  items         InvoiceItem[]
+
+  @@index([year, sequence])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+}
+
+enum ExpenseCategory {
+  LOYER
+  COTISATION
+  MATERIEL
+  AUTRE
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  date        DateTime        @db.Timestamptz(3)
+  category    ExpenseCategory
+  description String
+  amount      Decimal         @db.Decimal(10, 2)
+  recurring   Boolean         @default(false)
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+
+  @@index([date])
+}
