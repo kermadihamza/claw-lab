@@ -5,8 +5,14 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isSlotStillAvailable } from "@/lib/slots";
-import { sendBookingConfirmationEmail, sendNewBookingNotification } from "@/lib/mail";
+import {
+  sendBookingConfirmationEmail,
+  sendNewBookingNotification,
+  sendCancellationNotification,
+} from "@/lib/mail";
 import { bookingSchema, manualBookingSchema } from "@/lib/validation";
+
+const CANCELLATION_CUTOFF_HOURS = 24;
 
 export type BookingFormState = {
   ok: boolean;
@@ -128,6 +134,51 @@ export async function updateBookingStatus(
   await prisma.booking.update({ where: { id: bookingId }, data: { status } });
   revalidatePath("/admin/reservations");
   revalidatePath("/admin");
+}
+
+/** Annulation par la cliente elle-même, autorisée jusqu'à 24h avant le rendez-vous. */
+export async function cancelBookingByClient(bookingId: string): Promise<BookingFormState> {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { service: true },
+  });
+  if (!booking) {
+    return { ok: false, error: "Réservation introuvable." };
+  }
+  if (booking.status === "CANCELLED") {
+    return { ok: true };
+  }
+
+  const hoursUntil = (booking.startTime.getTime() - Date.now()) / (60 * 60 * 1000);
+  if (hoursUntil < CANCELLATION_CUTOFF_HOURS) {
+    return {
+      ok: false,
+      error: "Il n'est plus possible d'annuler en ligne moins de 24h avant le rendez-vous.",
+    };
+  }
+
+  await prisma.booking.update({ where: { id: bookingId }, data: { status: "CANCELLED" } });
+  revalidatePath("/admin/reservations");
+  revalidatePath("/admin");
+
+  try {
+    await sendCancellationNotification({
+      clientName: booking.clientName,
+      serviceName: booking.service.name,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+    });
+  } catch (err) {
+    console.error("Échec de l'envoi de la notification d'annulation:", err);
+  }
+
+  return { ok: true };
+}
+
+/** Action liée au formulaire de la page d'annulation : annule puis recharge la page pour refléter le nouvel état. */
+export async function cancelBookingAction(bookingId: string) {
+  await cancelBookingByClient(bookingId);
+  redirect(`/reserver/annuler/${bookingId}`);
 }
 
 export async function createBlockedSlot(input: { startTime: string; endTime: string; reason?: string }) {

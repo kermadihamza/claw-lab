@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer";
-import { bookingConfirmationEmail, newBookingNotificationEmail } from "@/lib/email-templates";
+import {
+  bookingConfirmationEmail,
+  newBookingNotificationEmail,
+  cancellationNotificationEmail,
+} from "@/lib/email-templates";
 import { buildBookingICS } from "@/lib/ics";
 
 function getTransporter() {
@@ -109,4 +113,22 @@ export async function sendNewBookingNotification(params: {
       }),
     ],
   });
+}
+
+/** Notifie le salon qu'une cliente a annulé son rendez-vous en ligne. */
+export async function sendCancellationNotification(params: {
+  clientName: string;
+  serviceName: string;
+  startTime: Date;
+  endTime: Date;
+}) {
+  const t = getTransporter();
+  const notifyTo = process.env.NOTIFY_EMAIL || process.env.SMTP_USER;
+  if (!t || !notifyTo) {
+    console.warn("SMTP non configuré : notification d'annulation non envoyée.");
+    return;
+  }
+
+  const { subject, text, html } = cancellationNotificationEmail(params);
+  await t.sendMail({ from: fromAddress(), to: notifyTo, subject, text, html });
 }
