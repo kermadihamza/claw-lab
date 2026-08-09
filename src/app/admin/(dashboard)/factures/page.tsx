@@ -102,9 +102,17 @@ export default async function FacturesPage() {
                         PDF
                       </Link>
                       {inv.status === "PAID" && (
-                        <form action={cancelInvoice.bind(null, inv.id)}>
-                          <button className="text-xs font-medium text-red-700 underline">Annuler</button>
-                        </form>
+                        <>
+                          <Link
+                            href={`/admin/factures/${inv.id}/edit`}
+                            className="text-xs font-medium text-ink underline"
+                          >
+                            Modifier
+                          </Link>
+                          <form action={cancelInvoice.bind(null, inv.id)}>
+                            <button className="text-xs font-medium text-red-700 underline">Annuler</button>
+                          </form>
+                        </>
                       )}
                     </div>
                   </td>

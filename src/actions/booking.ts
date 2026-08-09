@@ -10,7 +10,7 @@ import {
   sendNewBookingNotification,
   sendCancellationNotification,
 } from "@/lib/mail";
-import { bookingSchema, manualBookingSchema } from "@/lib/validation";
+import { bookingSchema, manualBookingSchema, bookingUpdateSchema } from "@/lib/validation";
 
 const CANCELLATION_CUTOFF_HOURS = 24;
 
@@ -124,6 +124,43 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
   });
 
   revalidatePath("/admin/reservations");
+  return { ok: true };
+}
+
+export async function updateBooking(bookingId: string, input: unknown): Promise<BookingFormState> {
+  const parsed = bookingUpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
+  }
+  const { serviceId, startTime, endTime, clientName, clientPhone, clientEmail, notes } = parsed.data;
+
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return { ok: false, error: "Créneau invalide" };
+  }
+
+  const stillAvailable = await isSlotStillAvailable(serviceId, start, end, bookingId);
+  if (!stillAvailable) {
+    return { ok: false, error: "Ce créneau chevauche un autre rendez-vous ou blocage." };
+  }
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      serviceId,
+      startTime: start,
+      endTime: end,
+      clientName,
+      clientPhone: clientPhone || null,
+      clientEmail: clientEmail || null,
+      notes: notes || null,
+    },
+  });
+
+  revalidatePath("/admin/reservations");
+  revalidatePath("/admin/calendrier");
+  revalidatePath("/admin/clients");
   return { ok: true };
 }
 

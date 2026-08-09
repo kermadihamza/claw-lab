@@ -97,7 +97,8 @@ export async function getOpenWeekdays(): Promise<number[]> {
 export async function isSlotStillAvailable(
   serviceId: string,
   startTime: Date,
-  endTime: Date
+  endTime: Date,
+  excludeBookingId?: string
 ): Promise<boolean> {
   const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
   const bufferMinutes = settings?.bufferMinutes ?? 10;
@@ -110,6 +111,7 @@ export async function isSlotStillAvailable(
         status: "CONFIRMED",
         startTime: { lt: searchEnd },
         endTime: { gt: searchStart },
+        ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
       },
       select: { startTime: true, endTime: true, service: { select: { category: true } } },
     }),

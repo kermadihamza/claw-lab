@@ -65,3 +65,11 @@ export const manualBookingSchema = bookingSchema.extend({
   clientPhone: z.string().min(6, "Numéro de téléphone requis"),
   clientEmail: z.string().email("Email invalide").optional().or(z.literal("")),
 });
+
+/** Pour l'édition admin d'une réservation existante : email et téléphone peuvent tous les deux être absents
+ *  (la réservation modifiée peut venir du flux client, du formulaire manuel, ou d'un import). */
+export const bookingUpdateSchema = bookingSchema.extend({
+  endTime: z.string().min(1),
+  clientEmail: z.string().email("Email invalide").optional().or(z.literal("")),
+  clientPhone: z.string().optional().or(z.literal("")),
+});

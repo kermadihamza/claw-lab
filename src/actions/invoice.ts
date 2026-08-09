@@ -94,6 +94,38 @@ export async function createManualInvoice(input: unknown) {
   return { ok: true, invoiceId: invoice.id };
 }
 
+export async function updateInvoice(invoiceId: string, input: unknown) {
+  const parsed = manualInvoiceSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
+  }
+  const { clientName, clientAddress, items } = parsed.data;
+  const total = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.invoiceItem.deleteMany({ where: { invoiceId } });
+    await tx.invoice.update({
+      where: { id: invoiceId },
+      data: {
+        clientName,
+        clientAddress: clientAddress || null,
+        totalAmount: total,
+        items: {
+          create: items.map((i) => ({
+            description: i.description,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            total: i.quantity * i.unitPrice,
+          })),
+        },
+      },
+    });
+  });
+
+  revalidatePath("/admin/factures");
+  return { ok: true };
+}
+
 export async function cancelInvoice(invoiceId: string) {
   await prisma.invoice.update({ where: { id: invoiceId }, data: { status: "CANCELLED" } });
   revalidatePath("/admin/factures");

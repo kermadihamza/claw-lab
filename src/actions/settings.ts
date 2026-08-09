@@ -60,20 +60,22 @@ export async function upsertService(input: unknown) {
   }
   const { id, category, name, priceMin, priceMax, durationMinutes, active, sortOrder } = parsed.data;
 
-  const data = {
+  const baseData = {
     category,
     name,
     priceMin,
     priceMax: priceMax === "" || priceMax == null ? null : priceMax,
     durationMinutes,
     active: active ?? true,
-    sortOrder: sortOrder ?? 0,
   };
 
   if (id) {
-    await prisma.service.update({ where: { id }, data });
+    await prisma.service.update({ where: { id }, data: { ...baseData, sortOrder: sortOrder ?? 0 } });
   } else {
-    await prisma.service.create({ data });
+    // Nouvelle prestation : par défaut, elle va à la fin de sa catégorie (pas de conflit de tri à 0).
+    const last = await prisma.service.findFirst({ where: { category }, orderBy: { sortOrder: "desc" } });
+    const nextSortOrder = sortOrder ?? (last ? last.sortOrder + 1 : 0);
+    await prisma.service.create({ data: { ...baseData, sortOrder: nextSortOrder } });
   }
 
   revalidatePath("/admin/parametres");
@@ -84,6 +86,30 @@ export async function upsertService(input: unknown) {
 
 export async function toggleServiceActive(id: string, active: boolean) {
   await prisma.service.update({ where: { id }, data: { active } });
+  revalidatePath("/admin/parametres");
+  revalidatePath("/tarifs");
+  revalidatePath("/reserver");
+}
+
+/** Échange le sortOrder d'une prestation avec son voisin (au sein de la même catégorie) pour la déplacer. */
+export async function moveService(serviceId: string, direction: "up" | "down") {
+  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  if (!service) return;
+
+  const siblings = await prisma.service.findMany({
+    where: { category: service.category },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+  });
+  const index = siblings.findIndex((s) => s.id === serviceId);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapIndex < 0 || swapIndex >= siblings.length) return;
+
+  const other = siblings[swapIndex];
+  await prisma.$transaction([
+    prisma.service.update({ where: { id: service.id }, data: { sortOrder: other.sortOrder } }),
+    prisma.service.update({ where: { id: other.id }, data: { sortOrder: service.sortOrder } }),
+  ]);
+
   revalidatePath("/admin/parametres");
   revalidatePath("/tarifs");
   revalidatePath("/reserver");

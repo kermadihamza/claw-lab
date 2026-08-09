@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { upsertService, toggleServiceActive } from "@/actions/settings";
+import { upsertService, toggleServiceActive, moveService } from "@/actions/settings";
 
 type ServiceData = {
   id: string;
@@ -22,7 +22,15 @@ const CATEGORIES = [
   { value: "GEL_X", label: "Gel X" },
 ];
 
-function ServiceRow({ service }: { service: ServiceData }) {
+function ServiceRow({
+  service,
+  isFirst,
+  isLast,
+}: {
+  service: ServiceData;
+  isFirst: boolean;
+  isLast: boolean;
+}) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: service.name,
@@ -48,8 +56,35 @@ function ServiceRow({ service }: { service: ServiceData }) {
     });
   }
 
+  function move(direction: "up" | "down") {
+    startTransition(async () => {
+      await moveService(service.id, direction);
+      router.refresh();
+    });
+  }
+
   return (
-    <div className="grid grid-cols-[1fr_5rem_5rem_5rem_auto_auto] items-center gap-2 border-t border-ink/10 py-2 text-sm">
+    <div className="grid grid-cols-[2.5rem_1fr_5rem_5rem_5rem_auto_auto] items-center gap-2 border-t border-ink/10 py-2 text-sm">
+      <div className="flex flex-col">
+        <button
+          type="button"
+          onClick={() => move("up")}
+          disabled={isFirst || isPending}
+          aria-label="Monter"
+          className="leading-none text-ink-light hover:text-ink disabled:opacity-30"
+        >
+          ▲
+        </button>
+        <button
+          type="button"
+          onClick={() => move("down")}
+          disabled={isLast || isPending}
+          aria-label="Descendre"
+          className="leading-none text-ink-light hover:text-ink disabled:opacity-30"
+        >
+          ▼
+        </button>
+      </div>
       <input
         value={form.name}
         onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -164,8 +199,8 @@ export function ServicesManager({ services }: { services: ServiceData[] }) {
           return (
             <div key={cat.value}>
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-light">{cat.label}</p>
-              {items.map((s) => (
-                <ServiceRow key={s.id} service={s} />
+              {items.map((s, i) => (
+                <ServiceRow key={s.id} service={s} isFirst={i === 0} isLast={i === items.length - 1} />
               ))}
               <NewServiceForm category={cat.value} />
             </div>

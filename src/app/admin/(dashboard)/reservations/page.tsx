@@ -118,8 +118,11 @@ export default async function ReservationsPage({
                       {formatTime(b.startTime)} - {formatTime(b.endTime)}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium">{b.clientName}</p>
+                      <Link href={`/admin/clients?client=${encodeURIComponent(b.clientEmail || b.clientPhone || b.clientName)}`} className="font-medium hover:underline">
+                        {b.clientName}
+                      </Link>
                       <p className="text-xs text-ink-light">{b.clientPhone || b.clientEmail}</p>
+                      {b.notes && <p className="mt-0.5 text-xs italic text-ink-light">« {b.notes} »</p>}
                     </td>
                     <td className="px-4 py-3">{b.service.name}</td>
                     <td className="px-4 py-3">
@@ -129,6 +132,9 @@ export default async function ReservationsPage({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
+                        <Link href={`/admin/reservations/${b.id}/edit`} className="text-xs font-medium text-ink underline">
+                          Modifier
+                        </Link>
                         {b.status === "CONFIRMED" && (
                           <>
                             <form action={updateBookingStatus.bind(null, b.id, "COMPLETED")}>

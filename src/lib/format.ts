@@ -1,4 +1,14 @@
+import { formatInTimeZone } from "date-fns-tz";
+
 export const TIMEZONE = "Europe/Brussels";
+
+/** Décompose une Date en {date, time} locaux (Europe/Brussels), pour pré-remplir un formulaire. */
+export function splitDateTime(d: Date) {
+  return {
+    date: formatInTimeZone(d, TIMEZONE, "yyyy-MM-dd"),
+    time: formatInTimeZone(d, TIMEZONE, "HH:mm"),
+  };
+}
 
 export function formatEUR(amount: number | string): string {
   const value = typeof amount === "string" ? parseFloat(amount) : amount;

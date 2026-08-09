@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatEUR, formatTime, formatDateShort } from "@/lib/format";
+import { formatEUR, formatTime, formatDateShort, formatDateLong } from "@/lib/format";
 import { MonthlyRevenueChart, CategoryRevenueChart } from "@/components/admin/dashboard-charts";
 import type { ServiceCategory } from "@prisma/client";
 
@@ -12,6 +12,12 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   GAINAGE: "Gainage",
   GEL_X: "Gel X",
 };
+
+const QUICK_LINKS = [
+  { href: "/admin/calendrier", label: "Calendrier", desc: "Vue du mois" },
+  { href: "/admin/reservations", label: "Réservations", desc: "Nouveau RDV, jour par jour" },
+  { href: "/admin/clients", label: "Clients", desc: "Historique par personne" },
+];
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -28,8 +34,9 @@ export default async function DashboardPage() {
   const weekEnd = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000);
   const yearStart = new Date(now.getFullYear(), 0, 1);
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const thirtyDaysAgo = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [todayCount, weekCount, invoicesYear, expensesYear, upcoming] = await Promise.all([
+  const [todayCount, weekCount, invoicesYear, expensesYear, upcoming, last30Days] = await Promise.all([
     prisma.booking.count({
       where: { startTime: { gte: todayStart, lt: todayEnd }, status: { not: "CANCELLED" } },
     }),
@@ -50,6 +57,10 @@ export default async function DashboardPage() {
       orderBy: { startTime: "asc" },
       take: 8,
     }),
+    prisma.booking.findMany({
+      where: { startTime: { gte: thirtyDaysAgo, lt: todayEnd } },
+      select: { status: true },
+    }),
   ]);
 
   const revenueMonth = invoicesYear
@@ -61,6 +72,9 @@ export default async function DashboardPage() {
     .reduce((sum, inv) => sum + Number(inv.totalAmount), 0);
 
   const expensesTotal = Number(expensesYear._sum.amount ?? 0);
+
+  const cancelledLast30 = last30Days.filter((b) => b.status === "CANCELLED").length;
+  const cancellationRate = last30Days.length > 0 ? Math.round((cancelledLast30 / last30Days.length) * 100) : 0;
 
   const monthlyBuckets: { key: string; month: string; revenue: number }[] = [];
   for (let i = 5; i >= 0; i--) {
@@ -82,18 +96,37 @@ export default async function DashboardPage() {
     .map(([category, revenue]) => ({ category, revenue }))
     .sort((a, b) => b.revenue - a.revenue);
 
+  const kpis = [
+    { label: "RDV aujourd'hui", value: String(todayCount), accent: "border-l-blue-400" },
+    { label: "RDV cette semaine", value: String(weekCount), accent: "border-l-blue-400" },
+    { label: "Revenu du mois", value: formatEUR(revenueMonth), accent: "border-l-green-500" },
+    { label: "Revenu / dépenses (année)", value: `${formatEUR(revenueYear)} / ${formatEUR(expensesTotal)}`, accent: "border-l-green-500" },
+    { label: "Annulations (30j)", value: `${cancellationRate}%`, accent: cancellationRate > 20 ? "border-l-red-400" : "border-l-ink/20" },
+  ];
+
   return (
     <div>
-      <h1 className="font-display text-3xl font-bold">Dashboard</h1>
+      <div>
+        <h1 className="font-display text-3xl font-bold">Dashboard</h1>
+        <p className="mt-1 text-sm capitalize text-ink-light">{formatDateLong(now)}</p>
+      </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "RDV aujourd'hui", value: todayCount },
-          { label: "RDV cette semaine", value: weekCount },
-          { label: "Revenu du mois", value: formatEUR(revenueMonth) },
-          { label: "Revenu / dépenses (année)", value: `${formatEUR(revenueYear)} / ${formatEUR(expensesTotal)}` },
-        ].map((kpi) => (
-          <div key={kpi.label} className="rounded-2xl border border-ink/10 p-5">
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        {QUICK_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="rounded-2xl border border-ink/10 bg-white p-4 transition hover:border-ink/30 hover:shadow-sm"
+          >
+            <p className="font-display text-base font-semibold">{link.label}</p>
+            <p className="mt-0.5 text-xs text-ink-light">{link.desc}</p>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {kpis.map((kpi) => (
+          <div key={kpi.label} className={`rounded-2xl border border-ink/10 border-l-4 ${kpi.accent} bg-white p-5`}>
             <p className="text-xs font-medium uppercase tracking-wide text-ink-light">{kpi.label}</p>
             <p className="mt-2 font-display text-2xl font-semibold">{kpi.value}</p>
           </div>

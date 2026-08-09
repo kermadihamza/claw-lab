@@ -1,16 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { formatDateShort, formatEUR } from "@/lib/format";
-import { deleteExpense } from "@/actions/expense";
+import { formatEUR } from "@/lib/format";
+import { ExpenseRow } from "@/components/admin/expense-row";
 import { NewExpenseForm } from "@/components/admin/new-expense-form";
+import { GenerateRecurringButton } from "@/components/admin/generate-recurring-button";
 
 export const dynamic = "force-dynamic";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  LOYER: "Loyer",
-  COTISATION: "Cotisation",
-  MATERIEL: "Matériel",
-  AUTRE: "Autre",
-};
 
 export default async function DepensesPage() {
   const currentYear = new Date().getFullYear();
@@ -39,6 +33,10 @@ export default async function DepensesPage() {
         Total {currentYear} : <span className="font-semibold text-ink">{formatEUR(total)}</span>
       </p>
 
+      <div className="mt-4">
+        <GenerateRecurringButton />
+      </div>
+
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-ink/10">
           <table className="w-full text-sm">
@@ -60,17 +58,17 @@ export default async function DepensesPage() {
                 </tr>
               )}
               {expenses.map((e) => (
-                <tr key={e.id} className="border-t border-ink/10">
-                  <td className="px-4 py-3">{formatDateShort(e.date)}</td>
-                  <td className="px-4 py-3">{CATEGORY_LABELS[e.category]}</td>
-                  <td className="px-4 py-3">{e.description}</td>
-                  <td className="px-4 py-3">{formatEUR(e.amount as unknown as string)}</td>
-                  <td className="px-4 py-3">
-                    <form action={deleteExpense.bind(null, e.id)}>
-                      <button className="text-xs font-medium text-red-700 underline">Supprimer</button>
-                    </form>
-                  </td>
-                </tr>
+                <ExpenseRow
+                  key={e.id}
+                  expense={{
+                    id: e.id,
+                    date: e.date,
+                    category: e.category,
+                    description: e.description,
+                    amount: Number(e.amount),
+                    recurring: e.recurring,
+                  }}
+                />
               ))}
             </tbody>
           </table>
