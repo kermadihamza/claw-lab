@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDateLong, formatTime, formatEUR } from "@/lib/format";
+import { InstagramIcon } from "@/components/instagram-icon";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -49,6 +50,23 @@ export default async function ConfirmationPage({ params }: { params: { id: strin
       <p className="mt-2 text-sm text-ink-light">
         Blancaa Institut — 16, rue des Capucins, 6700 Arlon
       </p>
+
+      <div className="card-frosted mt-8 rounded-2xl p-6">
+        <p className="font-display text-lg font-semibold text-ink">En attendant votre rendez-vous</p>
+        <p className="mt-1 text-sm text-ink-light">
+          Suivez-nous sur Instagram pour découvrir nos dernières réalisations.
+        </p>
+        <a
+          href="https://www.instagram.com/the_clawlab/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-chrome px-5 py-3 text-sm font-semibold text-ink shadow transition hover:scale-[1.02] sm:px-8 sm:text-base"
+        >
+          <InstagramIcon className="h-5 w-5 shrink-0" />
+          Suivre @the_clawlab
+        </a>
+      </div>
+
       <Link
         href="/"
         className="mt-8 inline-block rounded-full border border-ink/20 px-8 py-3 font-semibold text-ink transition hover:bg-ink/5"
