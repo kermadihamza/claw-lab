@@ -48,7 +48,7 @@ export const DAY_NAMES = [
 type HoursLike = { dayOfWeek: number; isOpen: boolean; openTime: string | null; closeTime: string | null };
 
 /** Regroupe les jours ouverts consécutifs partageant les mêmes horaires, ex: "Lundi - Jeudi : 9h - 18h". */
-export function summarizeBusinessHours(hours: HoursLike[]): string[] {
+export function summarizeBusinessHours(hours: HoursLike[]): { label: string; hours: string }[] {
   const order = [1, 2, 3, 4, 5, 6, 0];
   const sorted = order
     .map((d) => hours.find((h) => h.dayOfWeek === d))
@@ -75,8 +75,8 @@ export function summarizeBusinessHours(hours: HoursLike[]): string[] {
       g.days.length > 1
         ? `${DAY_NAMES[g.days[0]]} - ${DAY_NAMES[g.days[g.days.length - 1]]}`
         : DAY_NAMES[g.days[0]];
-    return `${label} : ${g.openTime.replace(":00", "h").replace(":", "h")} - ${g.closeTime
-      .replace(":00", "h")
-      .replace(":", "h")}`;
+    const openLabel = g.openTime.replace(":00", "h").replace(":", "h");
+    const closeLabel = g.closeTime.replace(":00", "h").replace(":", "h");
+    return { label, hours: `${openLabel} - ${closeLabel}` };
   });
 }

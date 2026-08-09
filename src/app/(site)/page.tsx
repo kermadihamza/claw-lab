@@ -11,6 +11,20 @@ export default function HomePage() {
         paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
       }}
     >
+      <a
+        href="https://www.instagram.com/the_clawlab/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Claw lab sur Instagram"
+        className="absolute flex h-11 w-11 items-center justify-center rounded-full bg-chrome text-ink shadow transition hover:scale-105 sm:h-14 sm:w-14 lg:h-16 lg:w-16"
+        style={{
+          top: "max(1.5rem, env(safe-area-inset-top))",
+          right: "clamp(1.5rem, 4vw, 4rem)",
+        }}
+      >
+        <InstagramIcon className="h-5 w-5 sm:h-7 sm:w-7 lg:h-8 lg:w-8" />
+      </a>
+
       <div className="relative flex flex-1 items-center justify-center">
         <Image
           src="/p.png"
@@ -41,17 +55,6 @@ export default function HomePage() {
           Voir les tarifs
         </Link>
       </div>
-
-      <a
-        href="https://www.instagram.com/the_clawlab/"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Claw lab sur Instagram"
-        className="relative mt-6 flex items-center gap-1.5 text-sm text-slate-600 transition hover:text-slate-700"
-      >
-        <InstagramIcon className="h-4 w-4" />
-        @the_clawlab
-      </a>
     </div>
   );
 }

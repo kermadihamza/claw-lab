@@ -3,6 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { formatEUR } from "@/lib/format";
 import { InstagramIcon } from "@/components/instagram-icon";
 import type { ServiceCategory } from "@prisma/client";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tarifs — Claw lab",
+  description:
+    "Grille tarifaire complète Claw lab : vernis semi-permanent, manucure japonaise, gainage, pose gel X et nail art à Arlon.",
+};
 
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   VERNIS_SEMI_PERMANENT: "Vernis semi-permanent / dépose",
@@ -126,10 +133,11 @@ export default async function TarifsPage() {
         href="https://www.instagram.com/the_clawlab/"
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-10 flex items-center justify-center gap-2 rounded-full bg-chrome px-8 py-4 font-semibold text-ink shadow transition hover:scale-[1.02]"
+        className="mt-10 flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-chrome px-5 py-3 text-sm font-semibold text-ink shadow transition hover:scale-[1.02] sm:px-8 sm:py-4 sm:text-base"
       >
-        <InstagramIcon className="h-5 w-5" />
-        Voir nos réalisations sur Instagram
+        <InstagramIcon className="h-5 w-5 shrink-0" />
+        <span className="sm:hidden">Nos réalisations Instagram</span>
+        <span className="hidden sm:inline">Voir nos réalisations sur Instagram</span>
       </a>
     </div>
   );

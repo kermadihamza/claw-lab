@@ -2,6 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { getOpenWeekdays } from "@/lib/slots";
 import { BookingWizard } from "@/components/booking-wizard";
 import type { ServiceCategory } from "@prisma/client";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Réserver — Claw lab",
+  description: "Réservez votre créneau nail art en ligne chez Claw lab, à Arlon.",
+};
 
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   VERNIS_SEMI_PERMANENT: "Vernis semi-permanent / dépose",

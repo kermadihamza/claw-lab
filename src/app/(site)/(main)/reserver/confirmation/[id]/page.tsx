@@ -2,6 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDateLong, formatTime, formatEUR } from "@/lib/format";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Réservation confirmée — Claw lab",
+};
 
 export default async function ConfirmationPage({ params }: { params: { id: string } }) {
   const booking = await prisma.booking.findUnique({
