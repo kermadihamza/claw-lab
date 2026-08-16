@@ -2,6 +2,7 @@ import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 export const authOptions: AuthOptions = {
   session: { strategy: "jwt" },
@@ -15,8 +16,12 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        const forwardedFor = req?.headers?.["x-forwarded-for"];
+        const ip = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor)?.split(",")[0]?.trim() ?? "unknown";
+        if (!checkRateLimit(ip)) return null;
 
         const user = await prisma.adminUser.findUnique({
           where: { email: credentials.email },
@@ -26,6 +31,7 @@ export const authOptions: AuthOptions = {
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) return null;
 
+        resetRateLimit(ip);
         return { id: user.id, email: user.email, name: user.name };
       },
     }),
