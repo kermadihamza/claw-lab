@@ -10,9 +10,27 @@ import {
   sendNewBookingNotification,
   sendCancellationNotification,
 } from "@/lib/mail";
+import {
+  createCalendarEventForBooking,
+  updateCalendarEventForBooking,
+  deleteCalendarEvent,
+} from "@/lib/google-calendar";
 import { bookingSchema, manualBookingSchema, bookingUpdateSchema } from "@/lib/validation";
 
 const CANCELLATION_CUTOFF_HOURS = 24;
+
+function calendarEventDescription(params: {
+  clientName: string;
+  clientPhone?: string | null;
+  clientEmail?: string | null;
+  notes?: string | null;
+}) {
+  const lines = [`Cliente : ${params.clientName}`];
+  if (params.clientPhone) lines.push(`Téléphone : ${params.clientPhone}`);
+  if (params.clientEmail) lines.push(`Email : ${params.clientEmail}`);
+  if (params.notes) lines.push(`Notes : ${params.notes}`);
+  return lines.join("\n");
+}
 
 export type BookingFormState = {
   ok: boolean;
@@ -56,6 +74,17 @@ export async function createBooking(input: unknown): Promise<BookingFormState> {
 
   const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
   const address = settings?.address ?? "16, rue des Capucins, 6700 Arlon";
+
+  const googleEventId = await createCalendarEventForBooking({
+    summary: `${service.name} — ${clientName}`,
+    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes }),
+    location: address,
+    start,
+    end,
+  });
+  if (googleEventId) {
+    await prisma.booking.update({ where: { id: booking.id }, data: { googleEventId } });
+  }
 
   try {
     await sendBookingConfirmationEmail({
@@ -111,7 +140,7 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
     return { ok: false, error: "Ce créneau chevauche un autre rendez-vous ou blocage." };
   }
 
-  await prisma.booking.create({
+  const booking = await prisma.booking.create({
     data: {
       serviceId,
       startTime: start,
@@ -121,7 +150,22 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
       clientEmail: clientEmail || null,
       notes: notes || null,
     },
+    include: { service: true },
   });
+
+  const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
+  const address = settings?.address ?? "16, rue des Capucins, 6700 Arlon";
+
+  const googleEventId = await createCalendarEventForBooking({
+    summary: `${booking.service.name} — ${clientName}`,
+    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes }),
+    location: address,
+    start,
+    end,
+  });
+  if (googleEventId) {
+    await prisma.booking.update({ where: { id: booking.id }, data: { googleEventId } });
+  }
 
   revalidatePath("/admin/reservations");
   return { ok: true };
@@ -145,7 +189,12 @@ export async function updateBooking(bookingId: string, input: unknown): Promise<
     return { ok: false, error: "Ce créneau chevauche un autre rendez-vous ou blocage." };
   }
 
-  await prisma.booking.update({
+  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  if (!service) {
+    return { ok: false, error: "Prestation introuvable" };
+  }
+
+  const existing = await prisma.booking.update({
     where: { id: bookingId },
     data: {
       serviceId,
@@ -158,6 +207,25 @@ export async function updateBooking(bookingId: string, input: unknown): Promise<
     },
   });
 
+  const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
+  const address = settings?.address ?? "16, rue des Capucins, 6700 Arlon";
+  const calendarParams = {
+    summary: `${service.name} — ${clientName}`,
+    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes }),
+    location: address,
+    start,
+    end,
+  };
+
+  if (existing.googleEventId) {
+    await updateCalendarEventForBooking(existing.googleEventId, calendarParams);
+  } else {
+    const googleEventId = await createCalendarEventForBooking(calendarParams);
+    if (googleEventId) {
+      await prisma.booking.update({ where: { id: bookingId }, data: { googleEventId } });
+    }
+  }
+
   revalidatePath("/admin/reservations");
   revalidatePath("/admin/calendrier");
   revalidatePath("/admin/clients");
@@ -168,7 +236,13 @@ export async function updateBookingStatus(
   bookingId: string,
   status: "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW"
 ) {
-  await prisma.booking.update({ where: { id: bookingId }, data: { status } });
+  const booking = await prisma.booking.update({ where: { id: bookingId }, data: { status } });
+
+  if (status === "CANCELLED" && booking.googleEventId) {
+    await deleteCalendarEvent(booking.googleEventId);
+    await prisma.booking.update({ where: { id: bookingId }, data: { googleEventId: null } });
+  }
+
   revalidatePath("/admin/reservations");
   revalidatePath("/admin");
 }
@@ -197,6 +271,11 @@ export async function cancelBookingByClient(bookingId: string): Promise<BookingF
   await prisma.booking.update({ where: { id: bookingId }, data: { status: "CANCELLED" } });
   revalidatePath("/admin/reservations");
   revalidatePath("/admin");
+
+  if (booking.googleEventId) {
+    await deleteCalendarEvent(booking.googleEventId);
+    await prisma.booking.update({ where: { id: bookingId }, data: { googleEventId: null } });
+  }
 
   try {
     await sendCancellationNotification({
