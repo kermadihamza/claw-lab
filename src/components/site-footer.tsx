@@ -1,13 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { summarizeBusinessHours } from "@/lib/format";
 import { InstagramIcon } from "@/components/instagram-icon";
 
 export async function SiteFooter() {
-  const hours = await prisma.businessHours.findMany();
   const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
-  const summary = summarizeBusinessHours(hours);
   const address = settings?.address ?? "16, rue des Capucins, 6700 Arlon";
 
   return (
@@ -33,11 +30,6 @@ export async function SiteFooter() {
         </div>
         <p className="mt-3">Blancaa Institut — {address}</p>
         <p className="mt-1">Paiement au salon.</p>
-        {summary.map((g) => (
-          <p key={g.label} className="mt-1">
-            {g.label} : <span className="font-semibold text-ink">{g.hours}</span>
-          </p>
-        ))}
         <Link href="/mentions-legales" className="mt-4 inline-block text-xs text-ink-light/70 underline">
           Mentions légales &amp; confidentialité
         </Link>
