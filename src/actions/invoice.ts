@@ -15,7 +15,7 @@ async function nextInvoiceNumber(tx: Prisma.TransactionClient, year: number) {
   return { sequence, number };
 }
 
-export async function generateInvoiceFromBooking(bookingId: string) {
+export async function generateInvoiceFromBooking(bookingId: string, priceOverride?: number) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { service: true, invoice: true },
@@ -24,7 +24,7 @@ export async function generateInvoiceFromBooking(bookingId: string) {
   if (booking.invoice) return { ok: false, error: "Une facture existe déjà pour ce rendez-vous" };
 
   const year = new Date().getFullYear();
-  const unitPrice = Number(booking.service.priceMin);
+  const unitPrice = priceOverride && priceOverride > 0 ? priceOverride : Number(booking.service.priceMin);
 
   const invoice = await prisma.$transaction(async (tx) => {
     const { sequence, number } = await nextInvoiceNumber(tx, year);
@@ -55,8 +55,10 @@ export async function generateInvoiceFromBooking(bookingId: string) {
 }
 
 /** Variante sans valeur de retour, pour être passée directement à un `<form action>`. */
-export async function generateInvoiceFromBookingForm(bookingId: string) {
-  await generateInvoiceFromBooking(bookingId);
+export async function generateInvoiceFromBookingForm(bookingId: string, formData: FormData) {
+  const raw = formData.get("price");
+  const price = raw ? Number(raw) : NaN;
+  await generateInvoiceFromBooking(bookingId, Number.isFinite(price) ? price : undefined);
 }
 
 export async function createManualInvoice(input: unknown) {

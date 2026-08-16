@@ -39,13 +39,24 @@ export default async function FacturesPage() {
           <h2 className="font-display text-lg font-semibold text-amber-900">
             Rendez-vous terminés sans facture
           </h2>
+          <p className="mt-1 text-xs text-amber-800">
+            Le prix est pré-rempli avec le tarif de la prestation — modifie-le si besoin (promo, remise duo...) avant de générer la facture.
+          </p>
           <ul className="mt-3 space-y-2">
             {uninvoicedCompleted.map((b) => (
-              <li key={b.id} className="flex items-center justify-between text-sm">
+              <li key={b.id} className="flex items-center justify-between gap-3 text-sm">
                 <span>
                   {formatDateShort(b.startTime)} — {b.clientName} — {b.service.name}
                 </span>
-                <form action={generateInvoiceFromBookingForm.bind(null, b.id)}>
+                <form action={generateInvoiceFromBookingForm.bind(null, b.id)} className="flex shrink-0 items-center gap-2">
+                  <input
+                    type="number"
+                    name="price"
+                    step="0.01"
+                    min="0"
+                    defaultValue={Number(b.service.priceMin)}
+                    className="w-20 rounded-lg border border-ink/20 px-2 py-1 text-xs"
+                  />
                   <button className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-cream-50">
                     Générer la facture
                   </button>
