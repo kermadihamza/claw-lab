@@ -44,8 +44,8 @@ export function BusinessHoursForm({ hours }: { hours: Hours[] }) {
       <h2 className="font-display text-lg font-semibold">Horaires d&apos;ouverture</h2>
       <form onSubmit={handleSubmit} className="mt-4 space-y-2 text-sm">
         {rows.map((row) => (
-          <div key={row.dayOfWeek} className="flex items-center gap-3">
-            <label className="flex w-32 items-center gap-2">
+          <div key={row.dayOfWeek} className="flex flex-wrap items-center gap-2 gap-y-1 sm:gap-3">
+            <label className="flex w-full items-center gap-2 sm:w-32">
               <input
                 type="checkbox"
                 checked={row.isOpen}

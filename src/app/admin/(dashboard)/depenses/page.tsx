@@ -20,7 +20,7 @@ export default async function DepensesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-bold">Dépenses</h1>
         <a
           href={`/api/depenses/export?year=${currentYear}`}
@@ -38,8 +38,8 @@ export default async function DepensesPage() {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-ink/10">
-          <table className="w-full text-sm">
+        <div className="min-w-0 overflow-x-auto rounded-2xl border border-ink/10 lg:col-span-2">
+          <table className="w-full min-w-[560px] text-sm">
             <thead className="bg-ink/5 text-left">
               <tr>
                 <th className="px-4 py-3">Date</th>

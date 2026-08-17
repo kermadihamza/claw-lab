@@ -99,8 +99,8 @@ export default async function ClientsPage({
       </form>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-3">
-        <div className="overflow-hidden rounded-2xl border border-ink/10 lg:col-span-2">
-          <table className="w-full text-sm">
+        <div className="min-w-0 overflow-x-auto rounded-2xl border border-ink/10 lg:col-span-2">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-ink/5 text-left">
               <tr>
                 <th className="px-4 py-3">Client</th>

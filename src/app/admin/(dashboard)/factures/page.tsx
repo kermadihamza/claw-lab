@@ -24,7 +24,7 @@ export default async function FacturesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-bold">Factures</h1>
         <a
           href={`/api/factures/export?year=${currentYear}`}
@@ -44,7 +44,7 @@ export default async function FacturesPage() {
           </p>
           <ul className="mt-3 space-y-2">
             {uninvoicedCompleted.map((b) => (
-              <li key={b.id} className="flex items-center justify-between gap-3 text-sm">
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 text-sm">
                 <span>
                   {formatDateShort(b.startTime)} — {b.clientName} — {b.service.name}
                 </span>
@@ -68,8 +68,8 @@ export default async function FacturesPage() {
       )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-ink/10">
-          <table className="w-full text-sm">
+        <div className="min-w-0 overflow-x-auto rounded-2xl border border-ink/10 lg:col-span-2">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-ink/5 text-left">
               <tr>
                 <th className="px-4 py-3">Numéro</th>
@@ -104,7 +104,7 @@ export default async function FacturesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                       <Link
                         href={`/api/factures/${inv.id}/pdf`}
                         target="_blank"

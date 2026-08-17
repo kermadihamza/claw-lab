@@ -62,7 +62,7 @@ export const businessHoursSchema = z.object({
 
 export const manualBookingSchema = bookingSchema.extend({
   endTime: z.string().min(1),
-  clientPhone: z.string().min(6, "Numéro de téléphone requis"),
+  clientPhone: z.string().optional().or(z.literal("")),
   clientEmail: z.string().email("Email invalide").optional().or(z.literal("")),
 });
 

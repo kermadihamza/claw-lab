@@ -66,7 +66,7 @@ export function SettingsForm({ settings }: { settings: SettingsData }) {
             className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"
           />
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             N° TVA
             <input
@@ -86,7 +86,7 @@ export function SettingsForm({ settings }: { settings: SettingsData }) {
             />
           </label>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className="block">
             Cotisation (€/trim.)
             <input

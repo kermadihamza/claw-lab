@@ -58,30 +58,35 @@ export function ManualInvoiceForm() {
 
         <div className="space-y-2">
           {items.map((item, i) => (
-            <div key={i} className="grid grid-cols-[1fr_3rem_5rem] gap-2">
+            <div
+              key={i}
+              className="flex flex-col gap-2 rounded-lg border border-ink/10 p-2 sm:grid sm:grid-cols-[1fr_3rem_5rem] sm:items-center sm:border-0 sm:p-0"
+            >
               <input
                 placeholder="Description"
                 required
                 value={item.description}
                 onChange={(e) => updateItem(i, { description: e.target.value })}
-                className="rounded-lg border border-ink/20 px-2 py-1.5"
+                className="min-w-0 rounded-lg border border-ink/20 px-2 py-1.5"
               />
-              <input
-                type="number"
-                min={1}
-                value={item.quantity}
-                onChange={(e) => updateItem(i, { quantity: Number(e.target.value) })}
-                className="rounded-lg border border-ink/20 px-2 py-1.5"
-              />
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Prix"
-                value={item.unitPrice}
-                onChange={(e) => updateItem(i, { unitPrice: Number(e.target.value) })}
-                className="rounded-lg border border-ink/20 px-2 py-1.5"
-              />
+              <div className="flex items-center gap-2 sm:contents">
+                <input
+                  type="number"
+                  min={1}
+                  value={item.quantity}
+                  onChange={(e) => updateItem(i, { quantity: Number(e.target.value) })}
+                  className="w-16 min-w-0 rounded-lg border border-ink/20 px-2 py-1.5 sm:w-auto"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Prix"
+                  value={item.unitPrice}
+                  onChange={(e) => updateItem(i, { unitPrice: Number(e.target.value) })}
+                  className="w-20 min-w-0 rounded-lg border border-ink/20 px-2 py-1.5 sm:w-auto"
+                />
+              </div>
             </div>
           ))}
           <button

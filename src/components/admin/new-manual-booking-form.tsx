@@ -105,9 +105,8 @@ export function NewManualBookingForm({
           />
         </label>
         <label className="block">
-          Téléphone
+          Téléphone (optionnel)
           <input
-            required
             value={clientPhone}
             onChange={(e) => setClientPhone(e.target.value)}
             className="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2"

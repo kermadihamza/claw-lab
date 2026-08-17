@@ -146,7 +146,7 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
       startTime: start,
       endTime: end,
       clientName,
-      clientPhone,
+      clientPhone: clientPhone || null,
       clientEmail: clientEmail || null,
       notes: notes || null,
     },

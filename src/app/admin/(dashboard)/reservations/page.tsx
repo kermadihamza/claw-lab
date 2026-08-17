@@ -67,14 +67,14 @@ export default async function ReservationsPage({
         <h1 className="font-display text-3xl font-bold">Réservations</h1>
       </div>
 
-      <div className="mt-6 flex items-center gap-3">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <Link
           href={`/admin/reservations?date=${addDays(date, -1)}`}
           className="rounded-lg border border-ink/20 px-3 py-1.5 text-sm hover:bg-ink/5"
         >
           ← Veille
         </Link>
-        <p className="min-w-[16rem] text-center font-medium capitalize">
+        <p className="order-first w-full text-center font-medium capitalize sm:order-none sm:w-auto sm:min-w-[16rem]">
           {formatDateLong(dayStart)}
         </p>
         <Link
@@ -85,16 +85,16 @@ export default async function ReservationsPage({
         </Link>
         <Link
           href={`/admin/reservations?date=${toDateStr(new Date())}`}
-          className="ml-2 text-sm text-ink-light underline"
+          className="text-sm text-ink-light underline sm:ml-2"
         >
           Aujourd&apos;hui
         </Link>
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="overflow-hidden rounded-2xl border border-ink/10">
-            <table className="w-full text-sm">
+        <div className="min-w-0 lg:col-span-2">
+          <div className="overflow-x-auto rounded-2xl border border-ink/10">
+            <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-ink/5 text-left">
                 <tr>
                   <th className="px-4 py-3">Heure</th>

@@ -64,73 +64,81 @@ function ServiceRow({
   }
 
   return (
-    <div className="grid grid-cols-[2.5rem_1fr_5rem_5rem_5rem_auto_auto] items-center gap-2 border-t border-ink/10 py-2 text-sm">
-      <div className="flex flex-col">
+    <div className="flex flex-col gap-2 border-t border-ink/10 py-3 text-sm sm:grid sm:grid-cols-[2.5rem_1fr_5rem_5rem_5rem_auto_auto] sm:items-center sm:gap-2 sm:py-2">
+      <div className="flex items-center gap-2 sm:contents">
+        <div className="flex flex-col">
+          <button
+            type="button"
+            onClick={() => move("up")}
+            disabled={isFirst || isPending}
+            aria-label="Monter"
+            className="leading-none text-ink-light hover:text-ink disabled:opacity-30"
+          >
+            ▲
+          </button>
+          <button
+            type="button"
+            onClick={() => move("down")}
+            disabled={isLast || isPending}
+            aria-label="Descendre"
+            className="leading-none text-ink-light hover:text-ink disabled:opacity-30"
+          >
+            ▼
+          </button>
+        </div>
+        <input
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          className="min-w-0 flex-1 rounded-lg border border-ink/20 px-2 py-1 sm:flex-none"
+        />
+      </div>
+      <div className="grid grid-cols-3 gap-2 sm:contents">
+        <input
+          type="number"
+          step="0.01"
+          placeholder="Prix min"
+          value={form.priceMin}
+          onChange={(e) => setForm({ ...form, priceMin: Number(e.target.value) })}
+          className="min-w-0 rounded-lg border border-ink/20 px-2 py-1"
+        />
+        <input
+          type="number"
+          step="0.01"
+          placeholder="Prix max"
+          value={form.priceMax}
+          onChange={(e) => setForm({ ...form, priceMax: e.target.value === "" ? "" : Number(e.target.value) })}
+          className="min-w-0 rounded-lg border border-ink/20 px-2 py-1"
+        />
+        <input
+          type="number"
+          placeholder="Durée"
+          value={form.durationMinutes}
+          onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
+          className="min-w-0 rounded-lg border border-ink/20 px-2 py-1"
+        />
+      </div>
+      <div className="flex items-center gap-3 sm:contents">
         <button
           type="button"
-          onClick={() => move("up")}
-          disabled={isFirst || isPending}
-          aria-label="Monter"
-          className="leading-none text-ink-light hover:text-ink disabled:opacity-30"
+          onClick={save}
+          disabled={isPending}
+          className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-cream-50 disabled:opacity-60"
         >
-          ▲
+          {isPending ? "..." : "Enregistrer"}
         </button>
         <button
           type="button"
-          onClick={() => move("down")}
-          disabled={isLast || isPending}
-          aria-label="Descendre"
-          className="leading-none text-ink-light hover:text-ink disabled:opacity-30"
+          onClick={() =>
+            startTransition(async () => {
+              await toggleServiceActive(service.id, !service.active);
+              router.refresh();
+            })
+          }
+          className="text-xs font-medium underline"
         >
-          ▼
+          {service.active ? "Désactiver" : "Activer"}
         </button>
       </div>
-      <input
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-        className="rounded-lg border border-ink/20 px-2 py-1"
-      />
-      <input
-        type="number"
-        step="0.01"
-        value={form.priceMin}
-        onChange={(e) => setForm({ ...form, priceMin: Number(e.target.value) })}
-        className="rounded-lg border border-ink/20 px-2 py-1"
-      />
-      <input
-        type="number"
-        step="0.01"
-        placeholder="max"
-        value={form.priceMax}
-        onChange={(e) => setForm({ ...form, priceMax: e.target.value === "" ? "" : Number(e.target.value) })}
-        className="rounded-lg border border-ink/20 px-2 py-1"
-      />
-      <input
-        type="number"
-        value={form.durationMinutes}
-        onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
-        className="rounded-lg border border-ink/20 px-2 py-1"
-      />
-      <button
-        type="button"
-        onClick={save}
-        disabled={isPending}
-        className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-cream-50 disabled:opacity-60"
-      >
-        {isPending ? "..." : "Enregistrer"}
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          startTransition(async () => {
-            await toggleServiceActive(service.id, !service.active);
-            router.refresh();
-          })
-        }
-        className="text-xs font-medium underline"
-      >
-        {service.active ? "Désactiver" : "Activer"}
-      </button>
     </div>
   );
 }
@@ -153,13 +161,13 @@ function NewServiceForm({ category }: { category: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-2 flex gap-2 text-sm">
+    <form onSubmit={handleSubmit} className="mt-2 flex flex-wrap gap-2 text-sm">
       <input
         placeholder="Nouvelle prestation"
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="flex-1 rounded-lg border border-ink/20 px-2 py-1"
+        className="min-w-[10rem] flex-1 rounded-lg border border-ink/20 px-2 py-1"
       />
       <input
         placeholder="Prix"
@@ -168,7 +176,7 @@ function NewServiceForm({ category }: { category: string }) {
         required
         value={priceMin}
         onChange={(e) => setPriceMin(e.target.value)}
-        className="w-20 rounded-lg border border-ink/20 px-2 py-1"
+        className="w-20 shrink-0 rounded-lg border border-ink/20 px-2 py-1"
       />
       <input
         placeholder="Min."
@@ -176,12 +184,12 @@ function NewServiceForm({ category }: { category: string }) {
         required
         value={durationMinutes}
         onChange={(e) => setDurationMinutes(e.target.value)}
-        className="w-20 rounded-lg border border-ink/20 px-2 py-1"
+        className="w-20 shrink-0 rounded-lg border border-ink/20 px-2 py-1"
       />
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-full border border-ink px-3 py-1 text-xs font-semibold disabled:opacity-60"
+        className="shrink-0 rounded-full border border-ink px-3 py-1 text-xs font-semibold disabled:opacity-60"
       >
         Ajouter
       </button>

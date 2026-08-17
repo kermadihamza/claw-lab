@@ -162,7 +162,7 @@ export default async function DashboardPage() {
         <ul className="mt-3 divide-y divide-ink/10">
           {upcoming.length === 0 && <li className="py-4 text-sm text-ink-light">Aucun rendez-vous à venir.</li>}
           {upcoming.map((b) => (
-            <li key={b.id} className="flex items-center justify-between py-3 text-sm">
+            <li key={b.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3 text-sm">
               <span>
                 {formatDateShort(b.startTime)} à {formatTime(b.startTime)}
               </span>

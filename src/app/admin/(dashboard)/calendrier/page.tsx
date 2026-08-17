@@ -92,14 +92,14 @@ export default async function CalendrierPage({
         <p className="text-sm text-ink-light">{totalActive} rendez-vous ce mois-ci</p>
       </div>
 
-      <div className="mt-6 flex items-center gap-3">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <Link
           href={`/admin/calendrier?month=${prevMonth}`}
           className="rounded-lg border border-ink/20 px-3 py-1.5 text-sm hover:bg-ink/5"
         >
           ← Mois précédent
         </Link>
-        <p className="min-w-[12rem] text-center font-medium">
+        <p className="order-first w-full text-center font-medium sm:order-none sm:w-auto sm:min-w-[12rem]">
           {MONTH_LABELS[month]} {year}
         </p>
         <Link
@@ -109,15 +109,15 @@ export default async function CalendrierPage({
           Mois suivant →
         </Link>
         {!isCurrentMonth && (
-          <Link href={`/admin/calendrier?month=${thisMonth}`} className="ml-2 text-sm text-ink-light underline">
+          <Link href={`/admin/calendrier?month=${thisMonth}`} className="text-sm text-ink-light underline sm:ml-2">
             Aujourd&apos;hui
           </Link>
         )}
       </div>
 
-      <div className="mt-6 grid grid-cols-7 gap-2">
+      <div className="mt-6 grid grid-cols-7 gap-1 sm:gap-2">
         {WEEKDAY_LABELS.map((w) => (
-          <p key={w} className="text-center text-xs font-semibold uppercase text-ink-light">
+          <p key={w} className="text-center text-[10px] font-semibold uppercase text-ink-light sm:text-xs">
             {w}
           </p>
         ))}
@@ -135,18 +135,18 @@ export default async function CalendrierPage({
             <Link
               key={dateStr}
               href={`/admin/reservations?date=${dateStr}`}
-              className={`flex min-h-[4.5rem] flex-col rounded-lg border p-2 text-sm transition hover:border-ink/40 ${
+              className={`flex min-h-[3.25rem] flex-col rounded-lg border p-1 text-sm transition hover:border-ink/40 sm:min-h-[4.5rem] sm:p-2 ${
                 isToday ? "border-ink" : "border-ink/10"
               } ${closed ? "bg-ink/[0.02] text-ink-light/50" : "bg-white"}`}
             >
-              <span className={`text-xs ${isToday ? "font-bold text-ink" : ""}`}>{day}</span>
+              <span className={`text-[10px] sm:text-xs ${isToday ? "font-bold text-ink" : ""}`}>{day}</span>
               {counts && counts.active > 0 && (
-                <span className="mt-auto self-start rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                <span className="mt-auto self-start rounded-full bg-blue-100 px-1 py-0.5 text-[9px] font-medium text-blue-800 sm:px-2 sm:text-xs">
                   {counts.active} RDV
                 </span>
               )}
               {counts && counts.cancelled > 0 && counts.active === 0 && (
-                <span className="mt-auto self-start rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                <span className="mt-auto self-start rounded-full bg-red-100 px-1 py-0.5 text-[9px] font-medium text-red-700 sm:px-2 sm:text-xs">
                   {counts.cancelled} annulé{counts.cancelled > 1 ? "s" : ""}
                 </span>
               )}
