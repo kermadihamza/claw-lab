@@ -12,7 +12,7 @@ export function deposeSurcharge(depose: DeposeChoice): number {
 }
 
 export function deposeLabel(depose: DeposeChoice): string | null {
-  if (depose === "SALON") return "Dépose (posée chez nous) incluse — offerte";
-  if (depose === "EXTERIEURE") return "Dépose extérieure incluse (+15€)";
+  if (depose === "SALON") return "Dépose offerte";
+  if (depose === "EXTERIEURE") return "Dépose extérieure (+15€)";
   return null;
 }

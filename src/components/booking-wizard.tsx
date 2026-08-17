@@ -20,8 +20,8 @@ type ModalStep = "schedule" | "details";
 
 const DEPOSE_OPTIONS: { value: DeposeChoice; label: string }[] = [
   { value: "NONE", label: "Non, ongles nus" },
-  { value: "SALON", label: "Oui, posée chez Claw lab" },
-  { value: "EXTERIEURE", label: "Oui, posée ailleurs" },
+  { value: "SALON", label: "Oui, posée chez Claw lab (offerte)" },
+  { value: "EXTERIEURE", label: "Oui, posée ailleurs (+15€)" },
 ];
 
 const WEEKDAY_LABELS = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
@@ -112,7 +112,7 @@ export function BookingWizard({
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>("schedule");
-  const [depose, setDepose] = useState<DeposeChoice>("NONE");
+  const [depose, setDepose] = useState<DeposeChoice | null>(null);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -137,7 +137,7 @@ export function BookingWizard({
   const monthCells = useMemo(() => buildMonthCells(calendarMonth), [calendarMonth]);
 
   useEffect(() => {
-    if (!serviceId || !date) {
+    if (!serviceId || !date || depose === null) {
       setSlots(null);
       return;
     }
@@ -169,7 +169,7 @@ export function BookingWizard({
     setServiceId(null);
     setDate(null);
     setSelectedSlot(null);
-    setDepose("NONE");
+    setDepose(null);
     setClientName("");
     setClientPhone("");
     setClientEmail("");
@@ -218,7 +218,7 @@ export function BookingWizard({
                       setDate(next ? toISODate(next) : null);
                       setCalendarMonth(next ?? today);
                       setSelectedSlot(null);
-                      setDepose("NONE");
+                      setDepose(s.isRemovalService ? "NONE" : null);
                       setModalStep("schedule");
                       setModalOpen(true);
                     }}
@@ -268,11 +268,11 @@ export function BookingWizard({
             {modalStep === "schedule" ? (
               <>
                 {!selectedService.isRemovalService && (
-                  <div className="mt-5 rounded-xl border border-ink/15 p-3">
+                  <div className="mt-5">
                     <p className="text-sm font-medium text-ink">
                       Avez-vous actuellement une pose sur les ongles ?
                     </p>
-                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="mt-2 space-y-2">
                       {DEPOSE_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
@@ -281,134 +281,135 @@ export function BookingWizard({
                             setDepose(opt.value);
                             setSelectedSlot(null);
                           }}
-                          className={`rounded-lg border px-3 py-2 text-center text-xs font-medium transition ${
+                          className={`block w-full rounded-lg border px-4 py-2.5 text-left text-sm font-medium transition ${
                             depose === opt.value
                               ? "border-slate-600 bg-slate-600 text-white"
-                              : "border-ink/15 text-ink hover:border-ink/40"
+                              : "border-ink/15 text-ink hover:border-slate-600/50"
                           }`}
                         >
                           {opt.label}
                         </button>
                       ))}
                     </div>
-                    {depose !== "NONE" && (
-                      <p className="mt-2 text-xs text-ink-light">{deposeLabel(depose)} · +30 min</p>
-                    )}
                   </div>
                 )}
 
-                {/* Navigation mensuelle */}
-                <div className="mt-5 flex items-center justify-between">
-                  <button
-                    type="button"
-                    aria-label="Mois précédent"
-                    disabled={monthIndex(calendarMonth) <= monthIndex(today)}
-                    onClick={() =>
-                      setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
-                    }
-                    className="rounded-full p-1.5 text-ink-light transition hover:bg-ink/5 disabled:opacity-30 disabled:hover:bg-transparent"
-                  >
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
-                      <path
-                        fillRule="evenodd"
-                        d="M12.707 15.707a1 1 0 0 1-1.414 0l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 1 1 1.414 1.414L8.414 10l4.293 4.293a1 1 0 0 1 0 1.414Z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                  <p className="font-display font-semibold text-ink">{formatMonthLabel(calendarMonth)}</p>
-                  <button
-                    type="button"
-                    aria-label="Mois suivant"
-                    disabled={monthIndex(calendarMonth) >= maxMonthIndex}
-                    onClick={() =>
-                      setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
-                    }
-                    className="rounded-full p-1.5 text-ink-light transition hover:bg-ink/5 disabled:opacity-30 disabled:hover:bg-transparent"
-                  >
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
-                      <path
-                        fillRule="evenodd"
-                        d="M7.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414-1.414L11.586 10 7.293 5.707a1 1 0 0 1 0-1.414Z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                {(selectedService.isRemovalService || depose !== null) && (
+                  <>
+                    {/* Navigation mensuelle */}
+                    <div className="mt-5 flex items-center justify-between">
+                      <button
+                        type="button"
+                        aria-label="Mois précédent"
+                        disabled={monthIndex(calendarMonth) <= monthIndex(today)}
+                        onClick={() =>
+                          setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
+                        }
+                        className="rounded-full p-1.5 text-ink-light transition hover:bg-ink/5 disabled:opacity-30 disabled:hover:bg-transparent"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                          <path
+                            fillRule="evenodd"
+                            d="M12.707 15.707a1 1 0 0 1-1.414 0l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 1 1 1.414 1.414L8.414 10l4.293 4.293a1 1 0 0 1 0 1.414Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                      <p className="font-display font-semibold text-ink">{formatMonthLabel(calendarMonth)}</p>
+                      <button
+                        type="button"
+                        aria-label="Mois suivant"
+                        disabled={monthIndex(calendarMonth) >= maxMonthIndex}
+                        onClick={() =>
+                          setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
+                        }
+                        className="rounded-full p-1.5 text-ink-light transition hover:bg-ink/5 disabled:opacity-30 disabled:hover:bg-transparent"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                          <path
+                            fillRule="evenodd"
+                            d="M7.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414-1.414L11.586 10 7.293 5.707a1 1 0 0 1 0-1.414Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
 
-                {/* Grille du calendrier */}
-                <div className="mt-4 grid grid-cols-7 gap-y-1 text-center">
-                  {WEEKDAY_LABELS.map((w) => (
-                    <p key={w} className="text-xs font-medium text-ink-light/60">
-                      {w}
-                    </p>
-                  ))}
-                  {monthCells.map((cell, i) => {
-                    if (!cell) return <div key={`empty-${i}`} />;
-                    const iso = toISODate(cell);
-                    const isPast = cell < today;
-                    const isClosed = !openWeekdaySet.has(cell.getDay());
-                    const disabled = isPast || isClosed;
-                    const isSelected = date === iso;
-                    const isToday = isSameDay(cell, today);
-
-                    return (
-                      <div key={iso} className="flex justify-center py-0.5">
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => {
-                            setDate(iso);
-                            setSelectedSlot(null);
-                          }}
-                          className={`relative flex h-9 w-9 items-center justify-center rounded-full text-sm transition ${
-                            disabled
-                              ? `cursor-not-allowed text-ink-light/30 ${isClosed ? "line-through" : ""}`
-                              : isSelected
-                                ? "bg-green-700 font-semibold text-white"
-                                : "font-medium text-green-700 hover:bg-green-50"
-                          }`}
-                        >
-                          {cell.getDate()}
-                          {isToday && (
-                            <span
-                              className={`absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${
-                                isSelected ? "bg-white" : "bg-red-500"
-                              }`}
-                            />
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Créneaux du jour sélectionné */}
-                {date && (
-                  <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                    {loadingSlots && (
-                      <p className="col-span-full text-sm text-ink-light/80">Chargement des créneaux...</p>
-                    )}
-                    {!loadingSlots && slots?.length === 0 && (
-                      <p className="col-span-full text-sm text-ink-light/80">
-                        Plus aucun créneau disponible ce jour-là.
-                      </p>
-                    )}
-                    {!loadingSlots &&
-                      slots?.map((slot) => (
-                        <button
-                          key={slot.startTime}
-                          type="button"
-                          onClick={() => {
-                            setSelectedSlot(slot);
-                            setModalStep("details");
-                          }}
-                          className="rounded-lg bg-green-100 px-3 py-2 text-center text-sm font-medium text-green-800 transition hover:bg-green-200"
-                        >
-                          {slot.label}
-                        </button>
+                    {/* Grille du calendrier */}
+                    <div className="mt-4 grid grid-cols-7 gap-y-1 text-center">
+                      {WEEKDAY_LABELS.map((w) => (
+                        <p key={w} className="text-xs font-medium text-ink-light/60">
+                          {w}
+                        </p>
                       ))}
-                  </div>
+                      {monthCells.map((cell, i) => {
+                        if (!cell) return <div key={`empty-${i}`} />;
+                        const iso = toISODate(cell);
+                        const isPast = cell < today;
+                        const isClosed = !openWeekdaySet.has(cell.getDay());
+                        const disabled = isPast || isClosed;
+                        const isSelected = date === iso;
+                        const isToday = isSameDay(cell, today);
+
+                        return (
+                          <div key={iso} className="flex justify-center py-0.5">
+                            <button
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => {
+                                setDate(iso);
+                                setSelectedSlot(null);
+                              }}
+                              className={`relative flex h-9 w-9 items-center justify-center rounded-full text-sm transition ${
+                                disabled
+                                  ? `cursor-not-allowed text-ink-light/30 ${isClosed ? "line-through" : ""}`
+                                  : isSelected
+                                    ? "bg-slate-600 font-semibold text-white"
+                                    : "font-medium text-ink hover:bg-ink/5"
+                              }`}
+                            >
+                              {cell.getDate()}
+                              {isToday && (
+                                <span
+                                  className={`absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${
+                                    isSelected ? "bg-white" : "bg-slate-600"
+                                  }`}
+                                />
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Créneaux du jour sélectionné */}
+                    {date && (
+                      <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                        {loadingSlots && (
+                          <p className="col-span-full text-sm text-ink-light/80">Chargement des créneaux...</p>
+                        )}
+                        {!loadingSlots && slots?.length === 0 && (
+                          <p className="col-span-full text-sm text-ink-light/80">
+                            Plus aucun créneau disponible ce jour-là.
+                          </p>
+                        )}
+                        {!loadingSlots &&
+                          slots?.map((slot) => (
+                            <button
+                              key={slot.startTime}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSlot(slot);
+                                setModalStep("details");
+                              }}
+                              className="rounded-lg border border-ink/15 bg-white px-3 py-2 text-center text-sm font-medium text-ink transition hover:border-slate-600 hover:text-slate-600"
+                            >
+                              {slot.label}
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             ) : (
@@ -418,7 +419,7 @@ export function BookingWizard({
                     <p className="font-medium capitalize text-ink">
                       {date && formatDateLabel(date)} à {selectedSlot?.label}
                     </p>
-                    {depose !== "NONE" && (
+                    {depose && depose !== "NONE" && (
                       <p className="mt-1 text-xs text-ink-light">{deposeLabel(depose)}</p>
                     )}
                   </div>
