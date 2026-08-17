@@ -239,7 +239,7 @@ export function BookingWizard({
       {/* Modale : horaire puis coordonnées */}
       {modalOpen && selectedService && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/15 p-4 backdrop-blur-md"
           onClick={closeModal}
         >
           <div
