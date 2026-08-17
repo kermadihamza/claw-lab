@@ -10,12 +10,13 @@ const services: {
   priceMax?: number;
   durationMinutes: number;
   sortOrder: number;
+  isRemovalService?: boolean;
 }[] = [
   // Vernis semi-permanent / dépose
   { category: "VERNIS_SEMI_PERMANENT", name: "Uni", priceMin: 40, durationMinutes: 60, sortOrder: 1 },
   { category: "VERNIS_SEMI_PERMANENT", name: "Nail art", priceMin: 45, priceMax: 60, durationMinutes: 90, sortOrder: 2 },
-  { category: "VERNIS_SEMI_PERMANENT", name: "Dépose", priceMin: 10, durationMinutes: 45, sortOrder: 3 },
-  { category: "VERNIS_SEMI_PERMANENT", name: "Dépose extérieure", priceMin: 15, durationMinutes: 45, sortOrder: 4 },
+  { category: "VERNIS_SEMI_PERMANENT", name: "Dépose", priceMin: 10, durationMinutes: 45, sortOrder: 3, isRemovalService: true },
+  { category: "VERNIS_SEMI_PERMANENT", name: "Dépose extérieure", priceMin: 15, durationMinutes: 45, sortOrder: 4, isRemovalService: true },
   // Manucure
   { category: "MANUCURE", name: "Japonaise", priceMin: 40, durationMinutes: 45, sortOrder: 1 },
   // Gainage sur ongle naturel

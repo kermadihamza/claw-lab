@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { manualInvoiceSchema } from "@/lib/validation";
+import { deposeSurcharge } from "@/lib/depose";
 
 async function nextInvoiceNumber(tx: Prisma.TransactionClient, year: number) {
   const last = await tx.invoice.findFirst({
@@ -24,7 +25,13 @@ export async function generateInvoiceFromBooking(bookingId: string, priceOverrid
   if (booking.invoice) return { ok: false, error: "Une facture existe déjà pour ce rendez-vous" };
 
   const year = new Date().getFullYear();
-  const unitPrice = priceOverride && priceOverride > 0 ? priceOverride : Number(booking.service.priceMin);
+  const surcharge = deposeSurcharge(booking.deposeType);
+  const unitPrice =
+    priceOverride && priceOverride > 0 ? priceOverride : Number(booking.service.priceMin) + surcharge;
+
+  let description = `${booking.service.name} (${booking.service.category})`;
+  if (booking.deposeType === "EXTERIEURE") description += " + dépose extérieure";
+  else if (booking.deposeType === "SALON") description += " + dépose offerte";
 
   const invoice = await prisma.$transaction(async (tx) => {
     const { sequence, number } = await nextInvoiceNumber(tx, year);
@@ -39,7 +46,7 @@ export async function generateInvoiceFromBooking(bookingId: string, priceOverrid
         items: {
           create: [
             {
-              description: `${booking.service.name} (${booking.service.category})`,
+              description,
               quantity: 1,
               unitPrice,
               total: unitPrice,

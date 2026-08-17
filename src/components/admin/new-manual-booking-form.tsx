@@ -5,8 +5,15 @@ import { fromZonedTime } from "date-fns-tz";
 import { addMinutes } from "date-fns";
 import { useRouter } from "next/navigation";
 import { createManualBooking } from "@/actions/booking";
+import { deposeExtraMinutes, type DeposeChoice } from "@/lib/depose";
 
-type ServiceOption = { id: string; name: string; category: string; durationMinutes: number };
+type ServiceOption = { id: string; name: string; category: string; durationMinutes: number; isRemovalService: boolean };
+
+const DEPOSE_OPTIONS: { value: DeposeChoice; label: string }[] = [
+  { value: "NONE", label: "Non, ongles nus" },
+  { value: "SALON", label: "Oui, posée chez Claw lab (offerte)" },
+  { value: "EXTERIEURE", label: "Oui, posée ailleurs (+15€)" },
+];
 
 export function NewManualBookingForm({
   services,
@@ -19,6 +26,7 @@ export function NewManualBookingForm({
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [date, setDate] = useState(defaultDate);
   const [time, setTime] = useState("09:00");
+  const [depose, setDepose] = useState<DeposeChoice>("NONE");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -26,13 +34,15 @@ export function NewManualBookingForm({
   const [isPending, startTransition] = useTransition();
 
   const service = services.find((s) => s.id === serviceId);
+  const showDepose = service && !service.isRemovalService;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!service) return;
     setError(null);
+    const effectiveDepose = service.isRemovalService ? "NONE" : depose;
     const start = fromZonedTime(`${date}T${time}:00`, "Europe/Brussels");
-    const end = addMinutes(start, service.durationMinutes);
+    const end = addMinutes(start, service.durationMinutes + deposeExtraMinutes(effectiveDepose));
 
     startTransition(async () => {
       const result = await createManualBooking({
@@ -43,6 +53,7 @@ export function NewManualBookingForm({
         clientName,
         clientPhone,
         clientEmail,
+        depose: effectiveDepose,
       });
       if (!result.ok) {
         setError(result.error ?? "Erreur");
@@ -51,6 +62,7 @@ export function NewManualBookingForm({
       setClientName("");
       setClientPhone("");
       setClientEmail("");
+      setDepose("NONE");
       router.refresh();
     });
   }
@@ -73,7 +85,7 @@ export function NewManualBookingForm({
             ))}
           </select>
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             Date
             <input
@@ -95,6 +107,24 @@ export function NewManualBookingForm({
             />
           </label>
         </div>
+        {showDepose && (
+          <div className="rounded-lg border border-ink/10 bg-ink/[0.02] p-3">
+            <p className="text-xs font-medium text-ink">A-t-elle actuellement une pose sur les ongles ?</p>
+            <div className="mt-2 space-y-1.5">
+              {DEPOSE_OPTIONS.map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 text-xs">
+                  <input
+                    type="radio"
+                    name="depose"
+                    checked={depose === opt.value}
+                    onChange={() => setDepose(opt.value)}
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <label className="block">
           Nom du client
           <input

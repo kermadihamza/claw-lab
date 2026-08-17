@@ -31,6 +31,7 @@ export default async function EditBookingPage({ params }: { params: { id: string
             name: s.name,
             category: s.category,
             durationMinutes: s.durationMinutes,
+            isRemovalService: s.isRemovalService,
           }))}
           initial={{
             serviceId: booking.serviceId,
@@ -40,6 +41,7 @@ export default async function EditBookingPage({ params }: { params: { id: string
             clientPhone: booking.clientPhone ?? "",
             clientEmail: booking.clientEmail ?? "",
             notes: booking.notes ?? "",
+            depose: booking.deposeType,
           }}
         />
       </div>

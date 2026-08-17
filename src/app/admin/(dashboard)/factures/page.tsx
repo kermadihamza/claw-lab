@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDateShort, formatEUR } from "@/lib/format";
 import { generateInvoiceFromBookingForm, cancelInvoice } from "@/actions/invoice";
 import { ManualInvoiceForm } from "@/components/admin/manual-invoice-form";
+import { deposeSurcharge, deposeLabel } from "@/lib/depose";
 
 export const dynamic = "force-dynamic";
 
@@ -43,26 +44,30 @@ export default async function FacturesPage() {
             Le prix est pré-rempli avec le tarif de la prestation — modifie-le si besoin (promo, remise duo...) avant de générer la facture.
           </p>
           <ul className="mt-3 space-y-2">
-            {uninvoicedCompleted.map((b) => (
-              <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                <span>
-                  {formatDateShort(b.startTime)} — {b.clientName} — {b.service.name}
-                </span>
-                <form action={generateInvoiceFromBookingForm.bind(null, b.id)} className="flex shrink-0 items-center gap-2">
-                  <input
-                    type="number"
-                    name="price"
-                    step="0.01"
-                    min="0"
-                    defaultValue={Number(b.service.priceMin)}
-                    className="w-20 rounded-lg border border-ink/20 px-2 py-1 text-xs"
-                  />
-                  <button className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-cream-50">
-                    Générer la facture
-                  </button>
-                </form>
-              </li>
-            ))}
+            {uninvoicedCompleted.map((b) => {
+              const label = deposeLabel(b.deposeType);
+              return (
+                <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                  <span>
+                    {formatDateShort(b.startTime)} — {b.clientName} — {b.service.name}
+                    {label && <span className="ml-2 text-xs font-medium text-slate-600">({label})</span>}
+                  </span>
+                  <form action={generateInvoiceFromBookingForm.bind(null, b.id)} className="flex shrink-0 items-center gap-2">
+                    <input
+                      type="number"
+                      name="price"
+                      step="0.01"
+                      min="0"
+                      defaultValue={Number(b.service.priceMin) + deposeSurcharge(b.deposeType)}
+                      className="w-20 rounded-lg border border-ink/20 px-2 py-1 text-xs"
+                    />
+                    <button className="rounded-full bg-ink px-3 py-1 text-xs font-semibold text-cream-50">
+                      Générer la facture
+                    </button>
+                  </form>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

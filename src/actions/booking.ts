@@ -16,6 +16,7 @@ import {
   deleteCalendarEvent,
 } from "@/lib/google-calendar";
 import { bookingSchema, manualBookingSchema, bookingUpdateSchema } from "@/lib/validation";
+import { deposeExtraMinutes, deposeLabel, type DeposeChoice } from "@/lib/depose";
 
 const CANCELLATION_CUTOFF_HOURS = 24;
 
@@ -24,10 +25,13 @@ function calendarEventDescription(params: {
   clientPhone?: string | null;
   clientEmail?: string | null;
   notes?: string | null;
+  depose?: DeposeChoice;
 }) {
   const lines = [`Cliente : ${params.clientName}`];
   if (params.clientPhone) lines.push(`Téléphone : ${params.clientPhone}`);
   if (params.clientEmail) lines.push(`Email : ${params.clientEmail}`);
+  const depLabel = params.depose ? deposeLabel(params.depose) : null;
+  if (depLabel) lines.push(depLabel);
   if (params.notes) lines.push(`Notes : ${params.notes}`);
   return lines.join("\n");
 }
@@ -43,17 +47,19 @@ export async function createBooking(input: unknown): Promise<BookingFormState> {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
   }
   const { serviceId, startTime, clientName, clientPhone, clientEmail, notes } = parsed.data;
+  const depose: DeposeChoice = parsed.data.depose;
 
   const service = await prisma.service.findUnique({ where: { id: serviceId } });
   if (!service || !service.active) {
     return { ok: false, error: "Cette prestation n'est plus disponible" };
   }
+  const effectiveDepose: DeposeChoice = service.isRemovalService ? "NONE" : depose;
 
   const start = new Date(startTime);
   if (Number.isNaN(start.getTime())) {
     return { ok: false, error: "Créneau invalide" };
   }
-  const end = addMinutes(start, service.durationMinutes);
+  const end = addMinutes(start, service.durationMinutes + deposeExtraMinutes(effectiveDepose));
 
   const stillAvailable = await isSlotStillAvailable(serviceId, start, end);
   if (!stillAvailable) {
@@ -69,6 +75,7 @@ export async function createBooking(input: unknown): Promise<BookingFormState> {
       clientPhone: clientPhone || null,
       clientEmail,
       notes: notes || null,
+      deposeType: effectiveDepose,
     },
   });
 
@@ -77,7 +84,7 @@ export async function createBooking(input: unknown): Promise<BookingFormState> {
 
   const googleEventId = await createCalendarEventForBooking({
     summary: `${service.name} — ${clientName}`,
-    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes }),
+    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes, depose: effectiveDepose }),
     location: address,
     start,
     end,
@@ -97,6 +104,7 @@ export async function createBooking(input: unknown): Promise<BookingFormState> {
       priceMin: service.priceMin as unknown as string,
       priceMax: service.priceMax as unknown as string | null,
       address,
+      deposeLabel: deposeLabel(effectiveDepose),
     });
   } catch (err) {
     console.error("Échec de l'envoi de l'email de confirmation:", err);
@@ -113,6 +121,7 @@ export async function createBooking(input: unknown): Promise<BookingFormState> {
       endTime: end,
       notes: notes || null,
       address,
+      deposeLabel: deposeLabel(effectiveDepose),
     });
   } catch (err) {
     console.error("Échec de l'envoi de la notification de réservation:", err);
@@ -135,6 +144,12 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
     return { ok: false, error: "Créneau invalide" };
   }
 
+  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  if (!service) {
+    return { ok: false, error: "Prestation introuvable" };
+  }
+  const effectiveDepose: DeposeChoice = service.isRemovalService ? "NONE" : parsed.data.depose;
+
   const stillAvailable = await isSlotStillAvailable(serviceId, start, end);
   if (!stillAvailable) {
     return { ok: false, error: "Ce créneau chevauche un autre rendez-vous ou blocage." };
@@ -149,6 +164,7 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
       clientPhone: clientPhone || null,
       clientEmail: clientEmail || null,
       notes: notes || null,
+      deposeType: effectiveDepose,
     },
     include: { service: true },
   });
@@ -158,7 +174,7 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
 
   const googleEventId = await createCalendarEventForBooking({
     summary: `${booking.service.name} — ${clientName}`,
-    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes }),
+    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes, depose: effectiveDepose }),
     location: address,
     start,
     end,
@@ -193,6 +209,7 @@ export async function updateBooking(bookingId: string, input: unknown): Promise<
   if (!service) {
     return { ok: false, error: "Prestation introuvable" };
   }
+  const effectiveDepose: DeposeChoice = service.isRemovalService ? "NONE" : parsed.data.depose;
 
   const existing = await prisma.booking.update({
     where: { id: bookingId },
@@ -204,6 +221,7 @@ export async function updateBooking(bookingId: string, input: unknown): Promise<
       clientPhone: clientPhone || null,
       clientEmail: clientEmail || null,
       notes: notes || null,
+      deposeType: effectiveDepose,
     },
   });
 
@@ -211,7 +229,7 @@ export async function updateBooking(bookingId: string, input: unknown): Promise<
   const address = settings?.address ?? "16, rue des Capucins, 6700 Arlon";
   const calendarParams = {
     summary: `${service.name} — ${clientName}`,
-    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes }),
+    description: calendarEventDescription({ clientName, clientPhone, clientEmail, notes, depose: effectiveDepose }),
     location: address,
     start,
     end,

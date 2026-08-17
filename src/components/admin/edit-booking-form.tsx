@@ -5,8 +5,15 @@ import { fromZonedTime } from "date-fns-tz";
 import { addMinutes } from "date-fns";
 import { useRouter } from "next/navigation";
 import { updateBooking } from "@/actions/booking";
+import { deposeExtraMinutes, type DeposeChoice } from "@/lib/depose";
 
-type ServiceOption = { id: string; name: string; category: string; durationMinutes: number };
+type ServiceOption = { id: string; name: string; category: string; durationMinutes: number; isRemovalService: boolean };
+
+const DEPOSE_OPTIONS: { value: DeposeChoice; label: string }[] = [
+  { value: "NONE", label: "Non, ongles nus" },
+  { value: "SALON", label: "Oui, posée chez Claw lab (offerte)" },
+  { value: "EXTERIEURE", label: "Oui, posée ailleurs (+15€)" },
+];
 
 export function EditBookingForm({
   bookingId,
@@ -23,12 +30,14 @@ export function EditBookingForm({
     clientPhone: string;
     clientEmail: string;
     notes: string;
+    depose: DeposeChoice;
   };
 }) {
   const router = useRouter();
   const [serviceId, setServiceId] = useState(initial.serviceId);
   const [date, setDate] = useState(initial.date);
   const [time, setTime] = useState(initial.time);
+  const [depose, setDepose] = useState<DeposeChoice>(initial.depose);
   const [clientName, setClientName] = useState(initial.clientName);
   const [clientPhone, setClientPhone] = useState(initial.clientPhone);
   const [clientEmail, setClientEmail] = useState(initial.clientEmail);
@@ -37,13 +46,15 @@ export function EditBookingForm({
   const [isPending, startTransition] = useTransition();
 
   const service = services.find((s) => s.id === serviceId);
+  const showDepose = service && !service.isRemovalService;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!service) return;
     setError(null);
+    const effectiveDepose = service.isRemovalService ? "NONE" : depose;
     const start = fromZonedTime(`${date}T${time}:00`, "Europe/Brussels");
-    const end = addMinutes(start, service.durationMinutes);
+    const end = addMinutes(start, service.durationMinutes + deposeExtraMinutes(effectiveDepose));
 
     startTransition(async () => {
       const result = await updateBooking(bookingId, {
@@ -55,6 +66,7 @@ export function EditBookingForm({
         clientPhone,
         clientEmail,
         notes,
+        depose: effectiveDepose,
       });
       if (!result.ok) {
         setError(result.error ?? "Erreur");
@@ -82,7 +94,7 @@ export function EditBookingForm({
             ))}
           </select>
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             Date
             <input
@@ -104,6 +116,24 @@ export function EditBookingForm({
             />
           </label>
         </div>
+        {showDepose && (
+          <div className="rounded-lg border border-ink/10 bg-ink/[0.02] p-3">
+            <p className="text-xs font-medium text-ink">A-t-elle actuellement une pose sur les ongles ?</p>
+            <div className="mt-2 space-y-1.5">
+              {DEPOSE_OPTIONS.map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 text-xs">
+                  <input
+                    type="radio"
+                    name="depose-edit"
+                    checked={depose === opt.value}
+                    onChange={() => setDepose(opt.value)}
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <label className="block">
           Nom du client
           <input
@@ -140,7 +170,7 @@ export function EditBookingForm({
           />
         </label>
         {error && <p className="text-xs font-medium text-red-700">{error}</p>}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button
             type="submit"
             disabled={isPending}

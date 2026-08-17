@@ -8,6 +8,7 @@ export const bookingSchema = z.object({
   clientEmail: z.string().min(1, "Email requis").email("Email invalide"),
   clientPhone: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
+  depose: z.enum(["NONE", "SALON", "EXTERIEURE"]).default("NONE"),
 });
 
 export const expenseSchema = z.object({

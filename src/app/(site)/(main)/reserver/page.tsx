@@ -33,6 +33,7 @@ export default async function ReserverPage() {
     priceMin: Number(s.priceMin),
     priceMax: s.priceMax != null ? Number(s.priceMax) : null,
     durationMinutes: s.durationMinutes,
+    isRemovalService: s.isRemovalService,
   }));
 
   return (

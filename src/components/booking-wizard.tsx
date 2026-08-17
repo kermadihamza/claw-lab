@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createBooking } from "@/actions/booking";
+import { deposeLabel, type DeposeChoice } from "@/lib/depose";
 
 type ServiceOption = {
   id: string;
@@ -11,10 +12,17 @@ type ServiceOption = {
   priceMin: number;
   priceMax: number | null;
   durationMinutes: number;
+  isRemovalService: boolean;
 };
 
 type Slot = { startTime: string; endTime: string; label: string };
 type ModalStep = "schedule" | "details";
+
+const DEPOSE_OPTIONS: { value: DeposeChoice; label: string }[] = [
+  { value: "NONE", label: "Non, ongles nus" },
+  { value: "SALON", label: "Oui, posée chez Claw lab" },
+  { value: "EXTERIEURE", label: "Oui, posée ailleurs" },
+];
 
 const WEEKDAY_LABELS = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
 const MAX_MONTHS_AHEAD = 2;
@@ -104,6 +112,7 @@ export function BookingWizard({
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<ModalStep>("schedule");
+  const [depose, setDepose] = useState<DeposeChoice>("NONE");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -133,11 +142,11 @@ export function BookingWizard({
       return;
     }
     setLoadingSlots(true);
-    fetch(`/api/slots?date=${date}&serviceId=${serviceId}`)
+    fetch(`/api/slots?date=${date}&serviceId=${serviceId}&depose=${depose}`)
       .then((r) => r.json())
       .then((data) => setSlots(data.slots ?? []))
       .finally(() => setLoadingSlots(false));
-  }, [serviceId, date]);
+  }, [serviceId, date, depose]);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -160,6 +169,7 @@ export function BookingWizard({
     setServiceId(null);
     setDate(null);
     setSelectedSlot(null);
+    setDepose("NONE");
     setClientName("");
     setClientPhone("");
     setClientEmail("");
@@ -180,6 +190,7 @@ export function BookingWizard({
         clientPhone,
         clientEmail,
         notes,
+        depose,
       });
       if (result && !result.ok) {
         setError(result.error ?? "Une erreur est survenue");
@@ -207,6 +218,7 @@ export function BookingWizard({
                       setDate(next ? toISODate(next) : null);
                       setCalendarMonth(next ?? today);
                       setSelectedSlot(null);
+                      setDepose("NONE");
                       setModalStep("schedule");
                       setModalOpen(true);
                     }}
@@ -255,6 +267,36 @@ export function BookingWizard({
 
             {modalStep === "schedule" ? (
               <>
+                {!selectedService.isRemovalService && (
+                  <div className="mt-5 rounded-xl border border-ink/15 p-3">
+                    <p className="text-sm font-medium text-ink">
+                      Avez-vous actuellement une pose sur les ongles ?
+                    </p>
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      {DEPOSE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setDepose(opt.value);
+                            setSelectedSlot(null);
+                          }}
+                          className={`rounded-lg border px-3 py-2 text-center text-xs font-medium transition ${
+                            depose === opt.value
+                              ? "border-slate-600 bg-slate-600 text-white"
+                              : "border-ink/15 text-ink hover:border-ink/40"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    {depose !== "NONE" && (
+                      <p className="mt-2 text-xs text-ink-light">{deposeLabel(depose)} · +30 min</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Navigation mensuelle */}
                 <div className="mt-5 flex items-center justify-between">
                   <button
@@ -372,9 +414,14 @@ export function BookingWizard({
             ) : (
               <>
                 <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-ink/15 px-4 py-3">
-                  <p className="font-medium capitalize text-ink">
-                    {date && formatDateLabel(date)} à {selectedSlot?.label}
-                  </p>
+                  <div>
+                    <p className="font-medium capitalize text-ink">
+                      {date && formatDateLabel(date)} à {selectedSlot?.label}
+                    </p>
+                    {depose !== "NONE" && (
+                      <p className="mt-1 text-xs text-ink-light">{deposeLabel(depose)}</p>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setModalStep("schedule")}

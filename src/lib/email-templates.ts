@@ -37,8 +37,9 @@ export function bookingConfirmationEmail(params: {
   priceMin: number | string;
   priceMax: number | string | null;
   address: string;
+  deposeLabel?: string | null;
 }) {
-  const { bookingId, clientName, serviceName, startTime, endTime, priceMin, priceMax, address } = params;
+  const { bookingId, clientName, serviceName, startTime, endTime, priceMin, priceMax, address, deposeLabel } = params;
   const logoUrl = `${siteUrl()}/logo_clawlab.png`;
 
   const priceLabel =
@@ -54,7 +55,7 @@ ${serviceName}
 ${formatDateLong(startTime)}
 ${formatTime(startTime)} - ${formatTime(endTime)}
 À régler au salon : ${priceLabel}
-
+${deposeLabel ? `${deposeLabel}\n` : ""}
 Blancaa Institut — ${address}
 Paiement au salon.
 
@@ -90,6 +91,7 @@ Besoin d'annuler ? C'est possible jusqu'à 24h avant votre rendez-vous : ${cance
                 <p style="margin:12px 0 0;text-transform:capitalize;">${formatDateLong(startTime)}</p>
                 <p style="margin:4px 0 0;">${formatTime(startTime)} - ${formatTime(endTime)}</p>
                 <p style="margin:16px 0 0;font-weight:700;">À régler au salon : ${priceLabel}</p>
+                ${deposeLabel ? `<p style="margin:8px 0 0;color:#4c6a97;">${deposeLabel}</p>` : ""}
               </td>
             </tr>
           </table>
@@ -123,8 +125,9 @@ export function newBookingNotificationEmail(params: {
   startTime: Date;
   endTime: Date;
   notes: string | null;
+  deposeLabel?: string | null;
 }) {
-  const { bookingId, clientName, clientEmail, clientPhone, serviceName, startTime, endTime, notes } = params;
+  const { bookingId, clientName, clientEmail, clientPhone, serviceName, startTime, endTime, notes, deposeLabel } = params;
   const subject = `Nouvelle réservation — ${clientName}`;
 
   const text = `Nouvelle réservation reçue.
@@ -132,7 +135,7 @@ export function newBookingNotificationEmail(params: {
 ${serviceName}
 ${formatDateLong(startTime)}
 ${formatTime(startTime)} - ${formatTime(endTime)}
-
+${deposeLabel ? `${deposeLabel}\n` : ""}
 Client : ${clientName}
 Email : ${clientEmail}
 Téléphone : ${clientPhone ?? "non renseigné"}
@@ -159,6 +162,7 @@ Ajouter au calendrier : ${calendarUrl(bookingId)}`;
               <td style="padding:20px;font-size:14px;line-height:1.6;">
                 <p style="margin:0;text-transform:capitalize;">${formatDateLong(startTime)}</p>
                 <p style="margin:4px 0 0;">${formatTime(startTime)} - ${formatTime(endTime)}</p>
+                ${deposeLabel ? `<p style="margin:8px 0 0;font-weight:700;color:#4c6a97;">${deposeLabel}</p>` : ""}
                 <hr style="margin:16px 0;border:none;border-top:1px solid rgba(32,36,44,0.1);" />
                 <p style="margin:0;font-weight:700;">${clientName}</p>
                 <p style="margin:4px 0 0;">${clientEmail}</p>

@@ -26,7 +26,7 @@ function zonedInstant(dateStr: string, hhmm: string): Date {
   return fromZonedTime(`${dateStr}T${hhmm}:00`, TIMEZONE);
 }
 
-export async function getAvailableSlots(dateStr: string, serviceId: string): Promise<Slot[]> {
+export async function getAvailableSlots(dateStr: string, serviceId: string, extraMinutes = 0): Promise<Slot[]> {
   const [service, hours, settings] = await Promise.all([
     prisma.service.findUnique({ where: { id: serviceId } }),
     prisma.businessHours.findUnique({ where: { dayOfWeek: weekdayOf(dateStr) } }),
@@ -70,11 +70,12 @@ export async function getAvailableSlots(dateStr: string, serviceId: string): Pro
   ];
 
   const now = new Date();
+  const totalDuration = service.durationMinutes + extraMinutes;
   const slots: Slot[] = [];
   let cursor = dayStart;
 
   while (true) {
-    const slotEnd = addMinutes(cursor, service.durationMinutes);
+    const slotEnd = addMinutes(cursor, totalDuration);
     if (slotEnd > dayEnd) break;
 
     const overlaps = occupied.some((o) => cursor < o.end && slotEnd > o.start);

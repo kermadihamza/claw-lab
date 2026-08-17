@@ -38,15 +38,16 @@ enum ServiceCategory {
 }
 
 model Service {
-  id              String          @id @default(cuid())
-  category        ServiceCategory
-  name            String
-  priceMin        Decimal         @db.Decimal(10, 2)
-  priceMax        Decimal?        @db.Decimal(10, 2)
-  durationMinutes Int
-  active          Boolean         @default(true)
-  sortOrder       Int             @default(0)
-  bookings        Booking[]
+  id               String          @id @default(cuid())
+  category         ServiceCategory
+  name             String
+  priceMin         Decimal         @db.Decimal(10, 2)
+  priceMax         Decimal?        @db.Decimal(10, 2)
+  durationMinutes  Int
+  active           Boolean         @default(true)
+  sortOrder        Int             @default(0)
+  isRemovalService Boolean         @default(false)
+  bookings         Booking[]
 
   @@index([category, sortOrder])
 }
@@ -77,6 +78,12 @@ enum BookingStatus {
   NO_SHOW
 }
 
+enum DeposeType {
+  NONE
+  SALON
+  EXTERIEURE
+}
+
 model Booking {
   id            String        @id @default(cuid())
   clientName    String
@@ -87,6 +94,7 @@ model Booking {
   startTime     DateTime      @db.Timestamptz(3)
   endTime       DateTime      @db.Timestamptz(3)
   status        BookingStatus @default(CONFIRMED)
+  deposeType    DeposeType    @default(NONE)
   notes         String?
   googleEventId String?       @unique
   createdAt     DateTime      @default(now()) @db.Timestamptz(3)

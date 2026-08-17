@@ -49,6 +49,7 @@ export async function sendBookingConfirmationEmail(params: {
   priceMin: number | string;
   priceMax: number | string | null;
   address: string;
+  deposeLabel?: string | null;
 }) {
   const t = getTransporter();
   if (!t) {
@@ -87,6 +88,7 @@ export async function sendNewBookingNotification(params: {
   endTime: Date;
   notes: string | null;
   address: string;
+  deposeLabel?: string | null;
 }) {
   const t = getTransporter();
   const notifyTo = process.env.NOTIFY_EMAIL || process.env.SMTP_USER;

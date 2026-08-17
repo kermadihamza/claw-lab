@@ -4,6 +4,7 @@ import { formatDateLong, formatTime } from "@/lib/format";
 import { updateBookingStatus, deleteBlockedSlot } from "@/actions/booking";
 import { NewManualBookingForm } from "@/components/admin/new-manual-booking-form";
 import { BlockSlotForm } from "@/components/admin/block-slot-form";
+import { deposeLabel } from "@/lib/depose";
 import type { BookingStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -124,7 +125,18 @@ export default async function ReservationsPage({
                       <p className="text-xs text-ink-light">{b.clientPhone || b.clientEmail}</p>
                       {b.notes && <p className="mt-0.5 text-xs italic text-ink-light">« {b.notes} »</p>}
                     </td>
-                    <td className="px-4 py-3">{b.service.name}</td>
+                    <td className="px-4 py-3">
+                      {b.service.name}
+                      {b.deposeType !== "NONE" && (
+                        <p
+                          className={`mt-0.5 text-xs font-medium ${
+                            b.deposeType === "EXTERIEURE" ? "text-amber-700" : "text-blue-700"
+                          }`}
+                        >
+                          {deposeLabel(b.deposeType)}
+                        </p>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_STYLES[b.status]}`}>
                         {STATUS_LABELS[b.status]}
@@ -198,6 +210,7 @@ export default async function ReservationsPage({
             name: s.name,
             category: s.category,
             durationMinutes: s.durationMinutes,
+            isRemovalService: s.isRemovalService,
           }))} defaultDate={date} />
           <BlockSlotForm defaultDate={date} />
         </div>
