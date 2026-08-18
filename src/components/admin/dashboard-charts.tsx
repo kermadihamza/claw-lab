@@ -8,14 +8,19 @@ function formatEUR(n: number) {
   return new Intl.NumberFormat("fr-BE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 }
 
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-ink/10 bg-white px-3 py-2 text-xs shadow-md">
-      <p className="font-medium">{label}</p>
-      <p className="mt-0.5 text-ink-light">{formatEUR(payload[0].value)}</p>
-    </div>
-  );
+function makeTooltip(formatter: (n: number) => string) {
+  // Recharts' Tooltip content prop type is awkward to satisfy exactly here; this is a
+  // private, non-exported component so a loose prop type is a reasonable trade-off.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return function ChartTooltip({ active, payload, label }: any) {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="rounded-lg border border-ink/10 bg-white px-3 py-2 text-xs shadow-md">
+        <p className="font-medium">{label}</p>
+        <p className="mt-0.5 text-ink-light">{formatter(Number(payload[0].value ?? 0))}</p>
+      </div>
+    );
+  };
 }
 
 export function MonthlyRevenueChart({ data }: { data: { month: string; revenue: number }[] }) {
@@ -25,7 +30,7 @@ export function MonthlyRevenueChart({ data }: { data: { month: string; revenue: 
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e5e8" vertical={false} />
         <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#454c5a" }} axisLine={{ stroke: "#e2e5e8" }} tickLine={false} />
         <YAxis tick={{ fontSize: 12, fill: "#454c5a" }} axisLine={false} tickLine={false} width={70} tickFormatter={(v) => formatEUR(v)} />
-        <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f4f5f6" }} />
+        <Tooltip content={makeTooltip(formatEUR)} cursor={{ fill: "#f4f5f6" }} />
         <Bar dataKey="revenue" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={40} />
       </BarChart>
     </ResponsiveContainer>
@@ -46,8 +51,43 @@ export function CategoryRevenueChart({ data }: { data: { category: string; reven
           tickLine={false}
           width={140}
         />
-        <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f4f5f6" }} />
+        <Tooltip content={makeTooltip(formatEUR)} cursor={{ fill: "#f4f5f6" }} />
         <Bar dataKey="revenue" fill={BRAND} radius={[0, 4, 4, 0]} maxBarSize={22} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function MonthlyBookingsChart({ data }: { data: { month: string; count: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e5e8" vertical={false} />
+        <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#454c5a" }} axisLine={{ stroke: "#e2e5e8" }} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: "#454c5a" }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
+        <Tooltip content={makeTooltip((n) => `${n} RDV`)} cursor={{ fill: "#f4f5f6" }} />
+        <Bar dataKey="count" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={40} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function TopServicesChart({ data }: { data: { name: string; count: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e5e8" horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 12, fill: "#454c5a" }} axisLine={false} tickLine={false} allowDecimals={false} />
+        <YAxis
+          type="category"
+          dataKey="name"
+          tick={{ fontSize: 12, fill: "#454c5a" }}
+          axisLine={false}
+          tickLine={false}
+          width={140}
+        />
+        <Tooltip content={makeTooltip((n) => `${n} RDV`)} cursor={{ fill: "#f4f5f6" }} />
+        <Bar dataKey="count" fill={BRAND} radius={[0, 4, 4, 0]} maxBarSize={22} />
       </BarChart>
     </ResponsiveContainer>
   );

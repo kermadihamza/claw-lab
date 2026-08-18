@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatEUR, formatTime, formatDateShort, formatDateLong } from "@/lib/format";
-import { MonthlyRevenueChart, CategoryRevenueChart } from "@/components/admin/dashboard-charts";
+import {
+  MonthlyRevenueChart,
+  CategoryRevenueChart,
+  MonthlyBookingsChart,
+  TopServicesChart,
+} from "@/components/admin/dashboard-charts";
 import type { ServiceCategory } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +32,10 @@ function monthLabel(year: number, month: number) {
   return new Intl.DateTimeFormat("fr-BE", { month: "short" }).format(new Date(year, month, 1));
 }
 
+function clientKey(b: { clientEmail: string | null; clientPhone: string | null; clientName: string }) {
+  return (b.clientEmail || b.clientPhone || b.clientName).trim().toLowerCase();
+}
+
 export default async function DashboardPage() {
   const now = new Date();
   const todayStart = startOfDay(now);
@@ -36,32 +45,42 @@ export default async function DashboardPage() {
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
   const thirtyDaysAgo = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [todayCount, weekCount, invoicesYear, expensesYear, upcoming, last30Days] = await Promise.all([
-    prisma.booking.count({
-      where: { startTime: { gte: todayStart, lt: todayEnd }, status: { not: "CANCELLED" } },
-    }),
-    prisma.booking.count({
-      where: { startTime: { gte: todayStart, lt: weekEnd }, status: { not: "CANCELLED" } },
-    }),
-    prisma.invoice.findMany({
-      where: { status: "PAID", issueDate: { gte: sixMonthsAgo } },
-      include: { booking: { include: { service: true } } },
-    }),
-    prisma.expense.aggregate({
-      where: { date: { gte: yearStart } },
-      _sum: { amount: true },
-    }),
-    prisma.booking.findMany({
-      where: { startTime: { gte: todayStart }, status: "CONFIRMED" },
-      include: { service: true },
-      orderBy: { startTime: "asc" },
-      take: 8,
-    }),
-    prisma.booking.findMany({
-      where: { startTime: { gte: thirtyDaysAgo, lt: todayEnd } },
-      select: { status: true },
-    }),
-  ]);
+  const [todayCount, weekCount, invoicesYear, expensesYear, upcoming, last30Days, bookingsSixMonths, allBookingsForClients] =
+    await Promise.all([
+      prisma.booking.count({
+        where: { startTime: { gte: todayStart, lt: todayEnd }, status: { not: "CANCELLED" } },
+      }),
+      prisma.booking.count({
+        where: { startTime: { gte: todayStart, lt: weekEnd }, status: { not: "CANCELLED" } },
+      }),
+      prisma.invoice.findMany({
+        where: { status: "PAID", issueDate: { gte: sixMonthsAgo } },
+        include: { booking: { include: { service: true } } },
+      }),
+      prisma.expense.aggregate({
+        where: { date: { gte: yearStart } },
+        _sum: { amount: true },
+      }),
+      prisma.booking.findMany({
+        where: { startTime: { gte: todayStart }, status: "CONFIRMED" },
+        include: { service: true },
+        orderBy: { startTime: "asc" },
+        take: 8,
+      }),
+      prisma.booking.findMany({
+        where: { startTime: { gte: thirtyDaysAgo, lt: todayEnd } },
+        select: { status: true },
+      }),
+      prisma.booking.findMany({
+        where: { startTime: { gte: sixMonthsAgo }, status: { not: "CANCELLED" } },
+        include: { service: true },
+      }),
+      prisma.booking.findMany({
+        where: { status: { not: "CANCELLED" } },
+        select: { clientName: true, clientEmail: true, clientPhone: true, startTime: true },
+        orderBy: { startTime: "asc" },
+      }),
+    ]);
 
   const revenueMonth = invoicesYear
     .filter((inv) => inv.issueDate >= new Date(now.getFullYear(), now.getMonth(), 1))
@@ -96,12 +115,50 @@ export default async function DashboardPage() {
     .map(([category, revenue]) => ({ category, revenue }))
     .sort((a, b) => b.revenue - a.revenue);
 
+  const bookingBuckets: { key: string; month: string; count: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    bookingBuckets.push({ key: `${d.getFullYear()}-${d.getMonth()}`, month: monthLabel(d.getFullYear(), d.getMonth()), count: 0 });
+  }
+  for (const b of bookingsSixMonths) {
+    const key = `${b.startTime.getFullYear()}-${b.startTime.getMonth()}`;
+    const bucket = bookingBuckets.find((bu) => bu.key === key);
+    if (bucket) bucket.count += 1;
+  }
+
+  const serviceCounts = new Map<string, number>();
+  for (const b of bookingsSixMonths) {
+    serviceCounts.set(b.service.name, (serviceCounts.get(b.service.name) ?? 0) + 1);
+  }
+  const topServices = Array.from(serviceCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const firstBookingByClient = new Map<string, Date>();
+  for (const b of allBookingsForClients) {
+    const key = clientKey(b);
+    if (!firstBookingByClient.has(key)) firstBookingByClient.set(key, b.startTime);
+  }
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const clientsThisMonth = new Set(
+    allBookingsForClients.filter((b) => b.startTime >= monthStart).map(clientKey)
+  );
+  let newClientsThisMonth = 0;
+  let returningClientsThisMonth = 0;
+  for (const key of Array.from(clientsThisMonth)) {
+    const firstDate = firstBookingByClient.get(key)!;
+    if (firstDate >= monthStart) newClientsThisMonth++;
+    else returningClientsThisMonth++;
+  }
+
   const kpis = [
     { label: "RDV aujourd'hui", value: String(todayCount), accent: "border-l-blue-400" },
     { label: "RDV cette semaine", value: String(weekCount), accent: "border-l-blue-400" },
     { label: "Revenu du mois", value: formatEUR(revenueMonth), accent: "border-l-green-500" },
     { label: "Revenu / dépenses (année)", value: `${formatEUR(revenueYear)} / ${formatEUR(expensesTotal)}`, accent: "border-l-green-500" },
     { label: "Annulations (30j)", value: `${cancellationRate}%`, accent: cancellationRate > 20 ? "border-l-red-400" : "border-l-ink/20" },
+    { label: "Nouvelles / fidèles (mois)", value: `${newClientsThisMonth} / ${returningClientsThisMonth}`, accent: "border-l-blue-400" },
   ];
 
   return (
@@ -124,7 +181,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {kpis.map((kpi) => (
           <div key={kpi.label} className={`rounded-2xl border border-ink/10 border-l-4 ${kpi.accent} bg-white p-5`}>
             <p className="text-xs font-medium uppercase tracking-wide text-ink-light">{kpi.label}</p>
@@ -145,6 +202,22 @@ export default async function DashboardPage() {
           <div className="mt-2">
             {categoryData.length > 0 ? (
               <CategoryRevenueChart data={categoryData} />
+            ) : (
+              <p className="py-16 text-center text-sm text-ink-light">Pas encore de données.</p>
+            )}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-ink/10 p-5">
+          <h2 className="font-display text-lg font-semibold">Rendez-vous par mois (6 derniers mois)</h2>
+          <div className="mt-2">
+            <MonthlyBookingsChart data={bookingBuckets.map(({ month, count }) => ({ month, count }))} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-ink/10 p-5">
+          <h2 className="font-display text-lg font-semibold">Prestations les plus demandées (6 mois)</h2>
+          <div className="mt-2">
+            {topServices.length > 0 ? (
+              <TopServicesChart data={topServices} />
             ) : (
               <p className="py-16 text-center text-sm text-ink-light">Pas encore de données.</p>
             )}
