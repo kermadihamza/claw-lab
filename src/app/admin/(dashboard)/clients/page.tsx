@@ -107,6 +107,7 @@ export default async function ClientsPage({
                 <th className="px-4 py-3">Contact</th>
                 <th className="px-4 py-3">RDV actifs</th>
                 <th className="px-4 py-3">Annulés</th>
+                <th className="px-4 py-3">Absences</th>
                 <th className="px-4 py-3">Dernière visite</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -114,14 +115,15 @@ export default async function ClientsPage({
             <tbody>
               {clients.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-ink-light">
+                  <td colSpan={7} className="px-4 py-8 text-center text-ink-light">
                     Aucun client trouvé.
                   </td>
                 </tr>
               )}
               {clients.map((c) => {
-                const active = c.bookings.filter((b) => b.status !== "CANCELLED").length;
+                const active = c.bookings.filter((b) => b.status !== "CANCELLED" && b.status !== "NO_SHOW").length;
                 const cancelled = c.bookings.filter((b) => b.status === "CANCELLED").length;
+                const noShow = c.bookings.filter((b) => b.status === "NO_SHOW").length;
                 return (
                   <tr
                     key={c.key}
@@ -132,6 +134,9 @@ export default async function ClientsPage({
                     <td className="px-4 py-3">{active}</td>
                     <td className="px-4 py-3">
                       {cancelled > 0 ? <span className="text-red-700">{cancelled}</span> : "0"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {noShow > 0 ? <span className="font-semibold text-amber-700">{noShow}</span> : "0"}
                     </td>
                     <td className="px-4 py-3">{formatDateShort(c.bookings[0].startTime)}</td>
                     <td className="px-4 py-3">

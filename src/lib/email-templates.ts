@@ -116,6 +116,77 @@ Besoin d'annuler ? C'est possible jusqu'à 24h avant votre rendez-vous : ${cance
   return { subject, text, html };
 }
 
+export function bookingReminderEmail(params: {
+  bookingId: string;
+  clientName: string;
+  serviceName: string;
+  startTime: Date;
+  endTime: Date;
+  address: string;
+}) {
+  const { bookingId, clientName, serviceName, startTime, endTime, address } = params;
+  const logoUrl = `${siteUrl()}/logo_clawlab.png`;
+  const subject = "Rappel — votre rendez-vous demain chez Claw lab";
+
+  const text = `À demain, ${clientName} !
+
+Petit rappel de votre rendez-vous :
+${serviceName}
+${formatDateLong(startTime)}
+${formatTime(startTime)} - ${formatTime(endTime)}
+
+Blancaa Institut — ${address}
+Paiement au salon.
+
+Un empêchement ? Merci de nous prévenir en annulant directement : ${cancelUrl(bookingId)}`;
+
+  const html = `<!doctype html>
+<html lang="fr">
+  <body style="margin:0;padding:32px 16px;background-color:#faf7f0;font-family:Georgia,'Times New Roman',serif;color:#20242c;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;">
+      <tr>
+        <td style="text-align:center;padding-bottom:24px;">
+          <img src="${logoUrl}" alt="Claw lab" width="72" height="72" style="border-radius:9999px;display:inline-block;" />
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align:center;">
+          <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#4c6a97;">
+            Rappel de rendez-vous
+          </p>
+          <h1 style="margin:12px 0 0;font-size:28px;font-weight:700;color:#20242c;">À demain, ${clientName} !</h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:28px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid rgba(32,36,44,0.1);border-radius:16px;">
+            <tr>
+              <td style="padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;">
+                <p style="margin:0;font-size:17px;font-weight:700;font-family:Georgia,serif;color:#20242c;">${serviceName}</p>
+                <p style="margin:12px 0 0;text-transform:capitalize;">${formatDateLong(startTime)}</p>
+                <p style="margin:4px 0 0;">${formatTime(startTime)} - ${formatTime(endTime)}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:28px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#454c5a;">
+          <p style="margin:0;">Blancaa Institut — ${address}</p>
+          <p style="margin:8px 0 0;">Paiement au salon.</p>
+          <p style="margin:16px 0 0;">
+            Un empêchement ? Merci de nous prévenir en annulant directement :
+            <a href="${cancelUrl(bookingId)}" style="color:#4c6a97;">annuler ma réservation</a>.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  return { subject, text, html };
+}
+
 export function newBookingNotificationEmail(params: {
   bookingId: string;
   clientName: string;

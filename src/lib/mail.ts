@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import {
   bookingConfirmationEmail,
+  bookingReminderEmail,
   newBookingNotificationEmail,
   cancellationNotificationEmail,
 } from "@/lib/email-templates";
@@ -74,6 +75,33 @@ export async function sendBookingConfirmationEmail(params: {
         endTime: params.endTime,
       }),
     ],
+  });
+}
+
+/** Rappel envoyé la veille du rendez-vous, pour réduire les absences. */
+export async function sendBookingReminderEmail(params: {
+  bookingId: string;
+  to: string;
+  clientName: string;
+  serviceName: string;
+  startTime: Date;
+  endTime: Date;
+  address: string;
+}) {
+  const t = getTransporter();
+  if (!t) {
+    console.warn("SMTP non configuré : rappel de rendez-vous non envoyé.");
+    return;
+  }
+
+  const { subject, text, html } = bookingReminderEmail(params);
+  await t.sendMail({
+    from: fromAddress(),
+    replyTo: process.env.SMTP_USER,
+    to: params.to,
+    subject,
+    text,
+    html,
   });
 }
 
