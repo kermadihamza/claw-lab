@@ -127,6 +127,10 @@ export default async function TarifsPage() {
         <p className="mt-4 text-xs text-ink-light">
           N&apos;hésitez pas à demander quel est le niveau de nail art de votre modèle.
         </p>
+        <p className="mt-4 text-xs text-ink-light">
+          Le prix final dépend de la complexité du design souhaité. Pour une estimation avant de réserver,
+          contactez-nous sur Instagram.
+        </p>
       </div>
 
       <a
