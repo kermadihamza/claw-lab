@@ -12,7 +12,7 @@ type ServiceOption = { id: string; name: string; category: string; durationMinut
 const DEPOSE_OPTIONS: { value: DeposeChoice; label: string }[] = [
   { value: "NONE", label: "Non, ongles nus" },
   { value: "SALON", label: "Oui, posée chez Claw lab (offerte)" },
-  { value: "EXTERIEURE", label: "Oui, posée ailleurs (+15€)" },
+  { value: "EXTERIEURE", label: "Oui, posée ailleurs (+20€)" },
 ];
 
 export function NewManualBookingForm({

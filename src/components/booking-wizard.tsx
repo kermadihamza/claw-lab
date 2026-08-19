@@ -21,7 +21,7 @@ type ModalStep = "schedule" | "details";
 const DEPOSE_OPTIONS: { value: DeposeChoice; label: string }[] = [
   { value: "NONE", label: "Non, ongles nus" },
   { value: "SALON", label: "Oui, posée chez Claw lab (offerte)" },
-  { value: "EXTERIEURE", label: "Oui, posée ailleurs (+15€)" },
+  { value: "EXTERIEURE", label: "Oui, posée ailleurs (+20€)" },
 ];
 
 const WEEKDAY_LABELS = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];

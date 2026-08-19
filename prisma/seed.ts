@@ -13,15 +13,15 @@ const services: {
   isRemovalService?: boolean;
 }[] = [
   // Vernis semi-permanent / dépose
-  { category: "VERNIS_SEMI_PERMANENT", name: "Uni", priceMin: 40, durationMinutes: 60, sortOrder: 1 },
-  { category: "VERNIS_SEMI_PERMANENT", name: "Nail art", priceMin: 45, priceMax: 60, durationMinutes: 90, sortOrder: 2 },
+  { category: "VERNIS_SEMI_PERMANENT", name: "Uni", priceMin: 45, durationMinutes: 60, sortOrder: 1 },
+  { category: "VERNIS_SEMI_PERMANENT", name: "Nail art", priceMin: 55, priceMax: 65, durationMinutes: 90, sortOrder: 2 },
   { category: "VERNIS_SEMI_PERMANENT", name: "Dépose", priceMin: 10, durationMinutes: 45, sortOrder: 3, isRemovalService: true },
-  { category: "VERNIS_SEMI_PERMANENT", name: "Dépose extérieure", priceMin: 15, durationMinutes: 45, sortOrder: 4, isRemovalService: true },
+  { category: "VERNIS_SEMI_PERMANENT", name: "Dépose extérieure seule", priceMin: 20, durationMinutes: 45, sortOrder: 4, isRemovalService: true },
   // Manucure
   { category: "MANUCURE", name: "Japonaise", priceMin: 40, durationMinutes: 45, sortOrder: 1 },
   // Gainage sur ongle naturel
-  { category: "GAINAGE", name: "Uni", priceMin: 45, durationMinutes: 90, sortOrder: 1 },
-  { category: "GAINAGE", name: "Nail art", priceMin: 50, priceMax: 65, durationMinutes: 120, sortOrder: 2 },
+  { category: "GAINAGE", name: "Uni", priceMin: 55, durationMinutes: 90, sortOrder: 1 },
+  { category: "GAINAGE", name: "Nail art", priceMin: 60, priceMax: 70, durationMinutes: 120, sortOrder: 2 },
   // Pose gel X
   { category: "GEL_X", name: "Uni", priceMin: 50, durationMinutes: 90, sortOrder: 1 },
   { category: "GEL_X", name: "French", priceMin: 55, durationMinutes: 90, sortOrder: 2 },

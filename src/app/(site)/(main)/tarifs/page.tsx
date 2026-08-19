@@ -58,13 +58,13 @@ export default async function TarifsPage() {
       </p>
 
       <a
-        href="/prix_clawlab.png"
-        download="claw-lab-tarifs.png"
+        href="/prix_clawlab.jpeg"
+        download="claw-lab-tarifs.jpeg"
         className="card-frosted mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5 shadow-lg transition hover:scale-[1.01] sm:flex-nowrap"
       >
         <div className="flex items-center gap-4">
           <Image
-            src="/prix_clawlab.png"
+            src="/prix_clawlab.jpeg"
             alt=""
             aria-hidden
             width={56}
