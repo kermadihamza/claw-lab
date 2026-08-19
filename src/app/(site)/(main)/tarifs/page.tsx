@@ -100,6 +100,19 @@ export default async function TarifsPage() {
                   <div>
                     <p className="font-medium text-ink">{s.name}</p>
                     <p className="text-xs text-ink-light/70">{durationLabel(s.durationMinutes)}</p>
+                    {s.priceMax != null && (
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        Selon complexité —{" "}
+                        <a
+                          href="https://www.instagram.com/the_clawlab/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline"
+                        >
+                          devis sur Instagram
+                        </a>
+                      </p>
+                    )}
                   </div>
                   <p className="font-display text-lg font-semibold text-ink">
                     {priceLabel(s.priceMin as unknown as string, s.priceMax as unknown as string | null)}
@@ -126,10 +139,6 @@ export default async function TarifsPage() {
         </p>
         <p className="mt-4 text-xs text-ink-light">
           N&apos;hésitez pas à demander quel est le niveau de nail art de votre modèle.
-        </p>
-        <p className="mt-4 text-xs text-ink-light">
-          Le prix final dépend de la complexité du design souhaité. Pour une estimation avant de réserver,
-          contactez-nous sur Instagram.
         </p>
       </div>
 
