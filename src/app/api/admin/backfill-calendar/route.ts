@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createCalendarEventForBooking } from "@/lib/google-calendar";
+import { createCalendarEventForBooking, listCalendarEvents } from "@/lib/google-calendar";
 import { deposeLabel } from "@/lib/depose";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Route temporaire à usage unique : crée un événement Google Calendar pour chaque réservation
- * active qui n'en a pas encore (googleEventId manquant), pour rattraper d'anciennes réservations
- * créées avant que la synchro ne fonctionne correctement. À supprimer après utilisation.
+ * active qui n'en a pas (googleEventId manquant OU événement introuvable sur le vrai calendrier,
+ * par ex. supprimé manuellement), pour rattraper d'anciennes réservations non synchronisées.
+ * À supprimer après utilisation.
  */
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -19,18 +20,36 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const dryRun = body?.dryRun !== false;
 
-  const bookings = await prisma.booking.findMany({
-    where: { status: { not: "CANCELLED" }, googleEventId: null },
+  const allActive = await prisma.booking.findMany({
+    where: { status: { not: "CANCELLED" } },
     include: { service: true },
     orderBy: { startTime: "asc" },
   });
+
+  const withEventId = allActive.filter((b) => b.googleEventId);
+  const idsOnCalendar = new Set<string>();
+  if (withEventId.length > 0) {
+    const timeMin = new Date(Math.min(...withEventId.map((b) => b.startTime.getTime())) - 24 * 60 * 60 * 1000);
+    const timeMax = new Date(Math.max(...withEventId.map((b) => b.endTime.getTime())) + 24 * 60 * 60 * 1000);
+    const events = await listCalendarEvents({ timeMin, timeMax });
+    for (const e of events) {
+      if (e.id && e.status !== "cancelled") idsOnCalendar.add(e.id);
+    }
+  }
+
+  const bookings = allActive.filter((b) => !b.googleEventId || !idsOnCalendar.has(b.googleEventId));
 
   if (dryRun) {
     return NextResponse.json({
       ok: true,
       dryRun: true,
       count: bookings.length,
-      bookings: bookings.map((b) => ({ id: b.id, clientName: b.clientName, startTime: b.startTime })),
+      bookings: bookings.map((b) => ({
+        id: b.id,
+        clientName: b.clientName,
+        startTime: b.startTime,
+        hadOrphanedId: !!b.googleEventId,
+      })),
     });
   }
 
