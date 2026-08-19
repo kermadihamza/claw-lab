@@ -229,7 +229,7 @@ export function BookingWizard({
                       {durationLabel(s.durationMinutes)} · {priceLabel(s)}
                     </p>
                     {s.priceMax != null && (
-                      <p className="mt-0.5 text-xs text-slate-600">Selon complexité — devis sur Instagram</p>
+                      <p className="mt-0.5 text-xs text-slate-600">Selon complexité, devis sur Instagram</p>
                     )}
                   </button>
                 ))}
@@ -257,14 +257,14 @@ export function BookingWizard({
                 <p className="text-sm text-ink-light">{selectedService.name}</p>
                 {selectedService.priceMax != null && (
                   <p className="mt-1 text-xs text-slate-600">
-                    Prix selon complexité —{" "}
+                    Prix selon complexité, devis sur{" "}
                     <a
                       href="https://www.instagram.com/the_clawlab/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline"
                     >
-                      devis sur Instagram
+                      Instagram
                     </a>
                   </p>
                 )}

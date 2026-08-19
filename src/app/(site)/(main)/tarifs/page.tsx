@@ -102,14 +102,14 @@ export default async function TarifsPage() {
                     <p className="text-xs text-ink-light/70">{durationLabel(s.durationMinutes)}</p>
                     {s.priceMax != null && (
                       <p className="mt-0.5 text-xs text-slate-600">
-                        Selon complexité —{" "}
+                        Selon complexité, devis sur{" "}
                         <a
                           href="https://www.instagram.com/the_clawlab/"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline"
                         >
-                          devis sur Instagram
+                          Instagram
                         </a>
                       </p>
                     )}
