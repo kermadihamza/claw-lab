@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const display = Fraunces({
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="fr">
       <body className={`${display.variable} ${body.variable} ${zoika.variable} font-body antialiased`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
