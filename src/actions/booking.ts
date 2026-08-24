@@ -183,6 +183,25 @@ export async function createManualBooking(input: unknown): Promise<BookingFormSt
     await prisma.booking.update({ where: { id: booking.id }, data: { googleEventId } });
   }
 
+  if (clientEmail) {
+    try {
+      await sendBookingConfirmationEmail({
+        bookingId: booking.id,
+        to: clientEmail,
+        clientName,
+        serviceName: booking.service.name,
+        startTime: start,
+        endTime: end,
+        priceMin: booking.service.priceMin as unknown as string,
+        priceMax: booking.service.priceMax as unknown as string | null,
+        address,
+        deposeLabel: deposeLabel(effectiveDepose),
+      });
+    } catch (err) {
+      console.error("Échec de l'envoi de l'email de confirmation:", err);
+    }
+  }
+
   revalidatePath("/admin/reservations");
   return { ok: true };
 }
