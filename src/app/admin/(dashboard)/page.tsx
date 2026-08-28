@@ -7,6 +7,7 @@ import {
   MonthlyBookingsChart,
   TopServicesChart,
 } from "@/components/admin/dashboard-charts";
+import { NetProfitPanel } from "@/components/admin/net-profit-panel";
 import type { ServiceCategory } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -188,6 +189,10 @@ export default async function DashboardPage() {
             <p className="mt-2 font-display text-2xl font-semibold">{kpi.value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-6">
+        <NetProfitPanel year={now.getFullYear()} revenue={revenueYear} expenses={expensesTotal} />
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">

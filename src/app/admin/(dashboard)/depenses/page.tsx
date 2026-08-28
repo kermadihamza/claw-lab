@@ -12,6 +12,12 @@ export default async function DepensesPage() {
     prisma.expense.findMany({
       where: { date: { gte: new Date(`${currentYear}-01-01`) } },
       orderBy: { date: "desc" },
+      include: {
+        invoices: {
+          select: { id: true, filename: true, mimeType: true, size: true },
+          orderBy: { createdAt: "asc" },
+        },
+      },
     }),
     prisma.settings.findUnique({ where: { id: "singleton" } }),
   ]);
@@ -67,6 +73,7 @@ export default async function DepensesPage() {
                     description: e.description,
                     amount: Number(e.amount),
                     recurring: e.recurring,
+                    invoices: e.invoices,
                   }}
                 />
               ))}

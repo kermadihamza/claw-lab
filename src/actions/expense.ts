@@ -4,14 +4,16 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { expenseSchema } from "@/lib/validation";
 
-export async function createExpense(input: unknown) {
+export async function createExpense(
+  input: unknown
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const parsed = expenseSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
   }
   const { date, category, description, amount, recurring } = parsed.data;
 
-  await prisma.expense.create({
+  const expense = await prisma.expense.create({
     data: {
       date: new Date(`${date}T12:00:00`),
       category,
@@ -23,7 +25,7 @@ export async function createExpense(input: unknown) {
 
   revalidatePath("/admin/depenses");
   revalidatePath("/admin");
-  return { ok: true };
+  return { ok: true, id: expense.id };
 }
 
 export async function updateExpense(id: string, input: unknown) {

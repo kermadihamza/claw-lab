@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createExpense } from "@/actions/expense";
+import { uploadExpenseInvoices } from "@/actions/expense-invoice";
 
 const CATEGORIES = [
   { value: "LOYER", label: "Loyer" },
@@ -23,8 +24,15 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState<string>(defaultAmount ? String(defaultAmount) : "");
   const [recurring, setRecurring] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function addFiles(fileList: FileList | File[]) {
+    setFiles((prev) => [...prev, ...Array.from(fileList)]);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,8 +43,17 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
         setError(result.error ?? "Erreur");
         return;
       }
+      if (files.length > 0) {
+        const formData = new FormData();
+        for (const file of files) formData.append("files", file);
+        const uploadResult = await uploadExpenseInvoices(result.id, formData);
+        if (!uploadResult.ok) {
+          setError(`Dépense ajoutée, mais ${uploadResult.error?.toLowerCase() ?? "l'envoi des fichiers a échoué"}`);
+        }
+      }
       setDescription("");
       setAmount("");
+      setFiles([]);
       router.refresh();
     });
   }
@@ -96,6 +113,58 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
           <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} />
           Dépense récurrente (mensuelle)
         </label>
+
+        <div>
+          <span className="block text-sm">Facture (optionnel)</span>
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              addFiles(e.dataTransfer.files);
+            }}
+            onClick={() => inputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            className={`mt-1 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-3 py-4 text-center transition-colors ${
+              isDragging ? "border-ink bg-ink/5" : "border-ink/20 hover:border-ink/40"
+            }`}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept="application/pdf,image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <p className="text-xs text-ink-light">Glisse une facture ici, ou clique pour choisir (PDF/image, 10 Mo max)</p>
+          </div>
+          {files.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {files.map((file, i) => (
+                <li key={`${file.name}-${i}`} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="shrink-0 font-medium text-red-700 underline"
+                  >
+                    Retirer
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {error && <p className="text-xs font-medium text-red-700">{error}</p>}
         <button
           type="submit"

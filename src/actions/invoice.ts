@@ -42,6 +42,7 @@ export async function generateInvoiceFromBooking(bookingId: string, priceOverrid
         sequence,
         bookingId: booking.id,
         clientName: booking.clientName,
+        issueDate: booking.startTime,
         totalAmount: unitPrice,
         items: {
           create: [

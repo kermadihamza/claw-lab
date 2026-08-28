@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateExpense, deleteExpense } from "@/actions/expense";
 import { formatDateShort, formatEUR } from "@/lib/format";
+import { ExpenseInvoiceDropzone } from "@/components/admin/expense-invoice-dropzone";
 
 const CATEGORIES = [
   { value: "LOYER", label: "Loyer" },
@@ -26,6 +27,7 @@ type Expense = {
   description: string;
   amount: number;
   recurring: boolean;
+  invoices: { id: string; filename: string; mimeType: string; size: number }[];
 };
 
 function toDateInput(d: Date) {
@@ -35,6 +37,7 @@ function toDateInput(d: Date) {
 export function ExpenseRow({ expense }: { expense: Expense }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [showInvoices, setShowInvoices] = useState(false);
   const [form, setForm] = useState({
     date: toDateInput(expense.date),
     category: expense.category,
@@ -119,35 +122,51 @@ export function ExpenseRow({ expense }: { expense: Expense }) {
   }
 
   return (
-    <tr className="border-t border-ink/10">
-      <td className="px-4 py-3">{formatDateShort(expense.date)}</td>
-      <td className="px-4 py-3">{CATEGORY_LABELS[expense.category]}</td>
-      <td className="px-4 py-3">
-        {expense.description}
-        {expense.recurring && (
-          <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-            Récurrente
-          </span>
-        )}
-      </td>
-      <td className="px-4 py-3">{formatEUR(expense.amount)}</td>
-      <td className="px-4 py-3">
-        <div className="flex gap-3">
-          <button type="button" onClick={() => setEditing(true)} className="text-xs font-medium underline">
-            Modifier
-          </button>
-          <button
-            type="button"
-            onClick={() => startTransition(async () => {
-              await deleteExpense(expense.id);
-              router.refresh();
-            })}
-            className="text-xs font-medium text-red-700 underline"
-          >
-            Supprimer
-          </button>
-        </div>
-      </td>
-    </tr>
+    <>
+      <tr className="border-t border-ink/10">
+        <td className="px-4 py-3">{formatDateShort(expense.date)}</td>
+        <td className="px-4 py-3">{CATEGORY_LABELS[expense.category]}</td>
+        <td className="px-4 py-3">
+          {expense.description}
+          {expense.recurring && (
+            <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+              Récurrente
+            </span>
+          )}
+        </td>
+        <td className="px-4 py-3">{formatEUR(expense.amount)}</td>
+        <td className="px-4 py-3">
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setShowInvoices((v) => !v)}
+              className="text-xs font-medium underline"
+            >
+              Factures{expense.invoices.length > 0 ? ` (${expense.invoices.length})` : ""}
+            </button>
+            <button type="button" onClick={() => setEditing(true)} className="text-xs font-medium underline">
+              Modifier
+            </button>
+            <button
+              type="button"
+              onClick={() => startTransition(async () => {
+                await deleteExpense(expense.id);
+                router.refresh();
+              })}
+              className="text-xs font-medium text-red-700 underline"
+            >
+              Supprimer
+            </button>
+          </div>
+        </td>
+      </tr>
+      {showInvoices && (
+        <tr className="border-t border-ink/10 bg-ink/[0.02]">
+          <td colSpan={5} className="px-4 py-4">
+            <ExpenseInvoiceDropzone expenseId={expense.id} invoices={expense.invoices} />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }

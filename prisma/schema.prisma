@@ -151,6 +151,20 @@ model Expense {
   amount      Decimal         @db.Decimal(10, 2)
   recurring   Boolean         @default(false)
   createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  invoices    ExpenseInvoice[]
 
   @@index([date])
+}
+
+model ExpenseInvoice {
+  id        String   @id @default(cuid())
+  expenseId String
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  filename  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([expenseId])
 }
