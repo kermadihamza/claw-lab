@@ -10,6 +10,7 @@ const CATEGORIES = [
   { value: "LOYER", label: "Loyer" },
   { value: "COTISATION", label: "Cotisation" },
   { value: "MATERIEL", label: "Matériel" },
+  { value: "MARKETING", label: "Marketing" },
   { value: "AUTRE", label: "Autre" },
 ];
 
@@ -17,6 +18,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   LOYER: "Loyer",
   COTISATION: "Cotisation",
   MATERIEL: "Matériel",
+  MARKETING: "Marketing",
   AUTRE: "Autre",
 };
 

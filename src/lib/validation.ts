@@ -13,7 +13,7 @@ export const bookingSchema = z.object({
 
 export const expenseSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  category: z.enum(["LOYER", "COTISATION", "MATERIEL", "AUTRE"]),
+  category: z.enum(["LOYER", "COTISATION", "MATERIEL", "MARKETING", "AUTRE"]),
   description: z.string().min(1, "Description requise"),
   amount: z.coerce.number().positive("Montant invalide"),
   recurring: z.coerce.boolean().optional(),

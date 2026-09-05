@@ -40,10 +40,20 @@ function durationLabel(minutes: number) {
 }
 
 export default async function TarifsPage() {
-  const services = await prisma.service.findMany({
-    where: { active: true },
-    orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
-  });
+  const [services, settings] = await Promise.all([
+    prisma.service.findMany({
+      where: { active: true },
+      orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
+    }),
+    prisma.settings.findUnique({
+      where: { id: "singleton" },
+      select: { tarifsImageUpdatedAt: true },
+    }),
+  ]);
+
+  const tarifsImageSrc = settings?.tarifsImageUpdatedAt
+    ? `/api/settings/tarifs-image?v=${settings.tarifsImageUpdatedAt.getTime()}`
+    : "/prix_clawlab.jpeg";
 
   const byCategory = CATEGORY_ORDER.map((category) => ({
     category,
@@ -58,17 +68,18 @@ export default async function TarifsPage() {
       </p>
 
       <a
-        href="/prix_clawlab.jpeg"
+        href={tarifsImageSrc}
         download="claw-lab-tarifs.jpeg"
         className="card-frosted mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5 shadow-lg transition hover:scale-[1.01] sm:flex-nowrap"
       >
         <div className="flex items-center gap-4">
           <Image
-            src="/prix_clawlab.jpeg"
+            src={tarifsImageSrc}
             alt=""
             aria-hidden
             width={56}
             height={79}
+            unoptimized
             className="rounded-lg shadow-sm"
           />
           <div>

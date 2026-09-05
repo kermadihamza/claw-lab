@@ -7,6 +7,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   LOYER: "Loyer",
   COTISATION: "Cotisation",
   MATERIEL: "Matériel",
+  MARKETING: "Marketing",
   AUTRE: "Autre",
 };
 

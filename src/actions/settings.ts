@@ -31,6 +31,36 @@ export async function updateSettings(input: unknown) {
   return { ok: true };
 }
 
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 Mo
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+export async function updateTarifsImage(formData: FormData) {
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Aucune image sélectionnée" };
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    return { ok: false, error: "L'image dépasse la taille max (10 Mo)" };
+  }
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return { ok: false, error: "Format non supporté (PNG, JPEG ou WEBP uniquement)" };
+  }
+
+  const data = Buffer.from(await file.arrayBuffer());
+  await prisma.settings.update({
+    where: { id: "singleton" },
+    data: {
+      tarifsImage: data,
+      tarifsImageMimeType: file.type,
+      tarifsImageUpdatedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/admin/parametres");
+  revalidatePath("/tarifs");
+  return { ok: true };
+}
+
 export async function updateBusinessHours(input: unknown) {
   const parsed = businessHoursSchema.safeParse(input);
   if (!parsed.success) {

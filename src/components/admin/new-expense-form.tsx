@@ -9,6 +9,7 @@ const CATEGORIES = [
   { value: "LOYER", label: "Loyer" },
   { value: "COTISATION", label: "Cotisation sociale" },
   { value: "MATERIEL", label: "Matériel" },
+  { value: "MARKETING", label: "Marketing" },
   { value: "AUTRE", label: "Autre" },
 ];
 

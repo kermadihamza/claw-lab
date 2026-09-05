@@ -2,12 +2,25 @@ import { prisma } from "@/lib/prisma";
 import { SettingsForm } from "@/components/admin/settings-form";
 import { BusinessHoursForm } from "@/components/admin/business-hours-form";
 import { ServicesManager } from "@/components/admin/services-manager";
+import { TarifsImageForm } from "@/components/admin/tarifs-image-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function ParametresPage() {
   const [settings, hours, services] = await Promise.all([
-    prisma.settings.findUnique({ where: { id: "singleton" } }),
+    prisma.settings.findUnique({
+      where: { id: "singleton" },
+      select: {
+        businessName: true,
+        address: true,
+        tvaNumber: true,
+        bceNumber: true,
+        cotisationAmount: true,
+        bufferMinutes: true,
+        loyerMensuel: true,
+        tarifsImageUpdatedAt: true,
+      },
+    }),
     prisma.businessHours.findMany(),
     prisma.service.findMany({ orderBy: [{ category: "asc" }, { sortOrder: "asc" }] }),
   ]);
@@ -29,6 +42,14 @@ export default async function ParametresPage() {
             bufferMinutes: settings.bufferMinutes,
             loyerMensuel: Number(settings.loyerMensuel),
           }}
+        />
+
+        <TarifsImageForm
+          imageUrl={
+            settings.tarifsImageUpdatedAt
+              ? `/api/settings/tarifs-image?v=${settings.tarifsImageUpdatedAt.getTime()}`
+              : null
+          }
         />
 
         <BusinessHoursForm hours={hours} />
