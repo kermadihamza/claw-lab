@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { TIMEZONE } from "@/lib/format";
 
 const SLOT_STEP_MINUTES = 15;
-const GEL_X_BUFFER_AFTER_MINUTES = 30;
 
 export type Slot = {
   startTime: Date;
@@ -47,7 +46,7 @@ export async function getAvailableSlots(dateStr: string, serviceId: string, extr
         startTime: { lt: dayEnd },
         endTime: { gt: dayStart },
       },
-      select: { startTime: true, endTime: true, service: { select: { category: true } } },
+      select: { startTime: true, endTime: true },
     }),
     prisma.blockedSlot.findMany({
       where: {
@@ -61,10 +60,7 @@ export async function getAvailableSlots(dateStr: string, serviceId: string, extr
   const occupied = [
     ...bookings.map((b) => ({
       start: addMinutes(b.startTime, -bufferMinutes),
-      end: addMinutes(
-        b.endTime,
-        b.service.category === "GEL_X" ? GEL_X_BUFFER_AFTER_MINUTES : bufferMinutes
-      ),
+      end: addMinutes(b.endTime, bufferMinutes),
     })),
     ...blocks.map((b) => ({ start: b.startTime, end: b.endTime })),
   ];
@@ -103,8 +99,8 @@ export async function isSlotStillAvailable(
 ): Promise<boolean> {
   const settings = await prisma.settings.findUnique({ where: { id: "singleton" } });
   const bufferMinutes = settings?.bufferMinutes ?? 10;
-  const searchStart = addMinutes(startTime, -Math.max(bufferMinutes, GEL_X_BUFFER_AFTER_MINUTES));
-  const searchEnd = addMinutes(endTime, Math.max(bufferMinutes, GEL_X_BUFFER_AFTER_MINUTES));
+  const searchStart = addMinutes(startTime, -bufferMinutes);
+  const searchEnd = addMinutes(endTime, bufferMinutes);
 
   const [nearbyBookings, conflictingBlock] = await Promise.all([
     prisma.booking.findMany({
@@ -114,7 +110,7 @@ export async function isSlotStillAvailable(
         endTime: { gt: searchStart },
         ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
       },
-      select: { startTime: true, endTime: true, service: { select: { category: true } } },
+      select: { startTime: true, endTime: true },
     }),
     prisma.blockedSlot.findFirst({
       where: {
@@ -126,10 +122,7 @@ export async function isSlotStillAvailable(
 
   const conflictingBooking = nearbyBookings.some((b) => {
     const occStart = addMinutes(b.startTime, -bufferMinutes);
-    const occEnd = addMinutes(
-      b.endTime,
-      b.service.category === "GEL_X" ? GEL_X_BUFFER_AFTER_MINUTES : bufferMinutes
-    );
+    const occEnd = addMinutes(b.endTime, bufferMinutes);
     return startTime < occEnd && endTime > occStart;
   });
 
