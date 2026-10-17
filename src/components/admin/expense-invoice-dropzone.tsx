@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { uploadExpenseInvoices, deleteExpenseInvoice } from "@/actions/expense-invoice";
+import { compressImage } from "@/lib/compress-image";
 
 type InvoiceFile = { id: string; filename: string; mimeType: string; size: number };
 
@@ -23,15 +24,20 @@ export function ExpenseInvoiceDropzone({ expenseId, invoices }: { expenseId: str
     const files = Array.from(fileList);
     if (files.length === 0) return;
     setError(null);
-    const formData = new FormData();
-    for (const file of files) formData.append("files", file);
     startTransition(async () => {
-      const result = await uploadExpenseInvoices(expenseId, formData);
-      if (!result.ok) {
-        setError(result.error ?? "Erreur lors de l'envoi");
-        return;
+      try {
+        const compressed = await Promise.all(files.map(compressImage));
+        const formData = new FormData();
+        for (const file of compressed) formData.append("files", file);
+        const result = await uploadExpenseInvoices(expenseId, formData);
+        if (!result.ok) {
+          setError(result.error ?? "Erreur lors de l'envoi");
+          return;
+        }
+        router.refresh();
+      } catch {
+        setError("Échec de l'envoi — réessaie ou prends une photo moins lourde");
       }
-      router.refresh();
     });
   }
 

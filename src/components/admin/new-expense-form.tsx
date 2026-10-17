@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createExpense } from "@/actions/expense";
 import { uploadExpenseInvoices } from "@/actions/expense-invoice";
+import { compressImage } from "@/lib/compress-image";
 
 const CATEGORIES = [
   { value: "LOYER", label: "Loyer" },
@@ -26,13 +27,23 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
   const [amount, setAmount] = useState<string>(defaultAmount ? String(defaultAmount) : "");
   const [recurring, setRecurring] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function addFiles(fileList: FileList | File[]) {
-    setFiles((prev) => [...prev, ...Array.from(fileList)]);
+  // Compresse tout de suite à la sélection : sur Safari iOS, un fichier venant d'un <input>
+  // devient invalide s'il traîne en mémoire sans être lu avant la soumission du formulaire.
+  async function addFiles(fileList: FileList | File[]) {
+    const incoming = Array.from(fileList);
+    setIsCompressing(true);
+    try {
+      const compressed = await Promise.all(incoming.map(compressImage));
+      setFiles((prev) => [...prev, ...compressed]);
+    } finally {
+      setIsCompressing(false);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -45,11 +56,15 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
         return;
       }
       if (files.length > 0) {
-        const formData = new FormData();
-        for (const file of files) formData.append("files", file);
-        const uploadResult = await uploadExpenseInvoices(result.id, formData);
-        if (!uploadResult.ok) {
-          setError(`Dépense ajoutée, mais ${uploadResult.error?.toLowerCase() ?? "l'envoi des fichiers a échoué"}`);
+        try {
+          const formData = new FormData();
+          for (const file of files) formData.append("files", file);
+          const uploadResult = await uploadExpenseInvoices(result.id, formData);
+          if (!uploadResult.ok) {
+            setError(`Dépense ajoutée, mais ${uploadResult.error?.toLowerCase() ?? "l'envoi des fichiers a échoué"}`);
+          }
+        } catch {
+          setError("Dépense ajoutée, mais l'envoi des fichiers a échoué — réessaie avec une photo moins lourde");
         }
       }
       setDescription("");
@@ -143,7 +158,9 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
                 e.target.value = "";
               }}
             />
-            <p className="text-xs text-ink-light">Glisse une facture ici, ou touche pour choisir (PDF/image, 10 Mo max)</p>
+            <p className="text-xs text-ink-light">
+              {isCompressing ? "Traitement..." : "Glisse une facture ici, ou touche pour choisir (PDF/image, 10 Mo max)"}
+            </p>
           </label>
           {files.length > 0 && (
             <ul className="mt-2 space-y-1">

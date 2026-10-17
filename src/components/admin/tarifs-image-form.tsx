@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateTarifsImage } from "@/actions/settings";
+import { compressImage } from "@/lib/compress-image";
 
 export function TarifsImageForm({ imageUrl }: { imageUrl: string | null }) {
   const router = useRouter();
@@ -17,16 +18,21 @@ export function TarifsImageForm({ imageUrl }: { imageUrl: string | null }) {
     if (!file) return;
     setError(null);
     setSuccess(false);
-    const formData = new FormData();
-    formData.append("image", file);
     startTransition(async () => {
-      const result = await updateTarifsImage(formData);
-      if (!result.ok) {
-        setError(result.error ?? "Erreur lors de l'envoi");
-        return;
+      try {
+        const compressed = await compressImage(file);
+        const formData = new FormData();
+        formData.append("image", compressed);
+        const result = await updateTarifsImage(formData);
+        if (!result.ok) {
+          setError(result.error ?? "Erreur lors de l'envoi");
+          return;
+        }
+        setSuccess(true);
+        router.refresh();
+      } catch {
+        setError("Échec de l'envoi — réessaie avec une image moins lourde");
       }
-      setSuccess(true);
-      router.refresh();
     });
   }
 
@@ -47,7 +53,7 @@ export function TarifsImageForm({ imageUrl }: { imageUrl: string | null }) {
           />
         )}
 
-        <div
+        <label
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragging(true);
@@ -58,9 +64,6 @@ export function TarifsImageForm({ imageUrl }: { imageUrl: string | null }) {
             setIsDragging(false);
             upload(e.dataTransfer.files);
           }}
-          onClick={() => inputRef.current?.click()}
-          role="button"
-          tabIndex={0}
           className={`flex min-w-[200px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
             isDragging ? "border-ink bg-ink/5" : "border-ink/20 hover:border-ink/40"
           }`}
@@ -69,17 +72,17 @@ export function TarifsImageForm({ imageUrl }: { imageUrl: string | null }) {
             ref={inputRef}
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            className="hidden"
+            className="sr-only"
             onChange={(e) => {
               if (e.target.files) upload(e.target.files);
               e.target.value = "";
             }}
           />
           <p className="text-sm font-medium text-ink">
-            {isPending ? "Envoi en cours..." : "Glisse une image ici, ou clique pour choisir"}
+            {isPending ? "Envoi en cours..." : "Glisse une image ici, ou touche pour choisir"}
           </p>
           <p className="mt-1 text-xs text-ink-light">PNG, JPEG ou WEBP, 10 Mo max</p>
-        </div>
+        </label>
       </div>
 
       {error && <p className="mt-2 text-xs font-medium text-red-700">{error}</p>}
