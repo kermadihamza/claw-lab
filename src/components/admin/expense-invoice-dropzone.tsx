@@ -37,7 +37,7 @@ export function ExpenseInvoiceDropzone({ expenseId, invoices }: { expenseId: str
 
   return (
     <div className="rounded-xl border border-ink/10 bg-ink/[0.02] p-4">
-      <div
+      <label
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
@@ -48,9 +48,6 @@ export function ExpenseInvoiceDropzone({ expenseId, invoices }: { expenseId: str
           setIsDragging(false);
           upload(e.dataTransfer.files);
         }}
-        onClick={() => inputRef.current?.click()}
-        role="button"
-        tabIndex={0}
         className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
           isDragging ? "border-ink bg-ink/5" : "border-ink/20 hover:border-ink/40"
         }`}
@@ -60,17 +57,17 @@ export function ExpenseInvoiceDropzone({ expenseId, invoices }: { expenseId: str
           type="file"
           multiple
           accept="application/pdf,image/*"
-          className="hidden"
+          className="sr-only"
           onChange={(e) => {
             if (e.target.files) upload(e.target.files);
             e.target.value = "";
           }}
         />
         <p className="text-sm font-medium text-ink">
-          {isPending ? "Envoi en cours..." : "Glisse une facture ici, ou clique pour choisir un fichier"}
+          {isPending ? "Envoi en cours..." : "Glisse une facture ici, ou touche pour choisir un fichier"}
         </p>
         <p className="mt-1 text-xs text-ink-light">PDF ou image, 10 Mo max par fichier</p>
-      </div>
+      </label>
       {error && <p className="mt-2 text-xs font-medium text-red-700">{error}</p>}
 
       {invoices.length > 0 && (

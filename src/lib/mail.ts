@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import {
   bookingConfirmationEmail,
   bookingReminderEmail,
+  reviewRequestEmail,
   newBookingNotificationEmail,
   cancellationNotificationEmail,
 } from "@/lib/email-templates";
@@ -95,6 +96,26 @@ export async function sendBookingReminderEmail(params: {
   }
 
   const { subject, text, html } = bookingReminderEmail(params);
+  await t.sendMail({
+    from: fromAddress(),
+    replyTo: process.env.SMTP_USER,
+    to: params.to,
+    subject,
+    text,
+    html,
+  });
+}
+
+/** Envoyée manuellement par l'admin (bouton "Demander un avis") après la visite d'une cliente. */
+export async function sendReviewRequestEmail(params: { to: string; clientName: string }) {
+  const reviewUrl = process.env.GOOGLE_REVIEW_URL;
+  const t = getTransporter();
+  if (!t || !reviewUrl) {
+    console.warn("SMTP ou GOOGLE_REVIEW_URL non configuré : demande d'avis non envoyée.");
+    return;
+  }
+
+  const { subject, text, html } = reviewRequestEmail({ clientName: params.clientName, reviewUrl });
   await t.sendMail({
     from: fromAddress(),
     replyTo: process.env.SMTP_USER,

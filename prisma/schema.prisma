@@ -101,6 +101,7 @@ model Booking {
   notes         String?
   googleEventId String?       @unique
   reminderSentAt DateTime?    @db.Timestamptz(3)
+  reviewRequestSentAt DateTime? @db.Timestamptz(3)
   createdAt     DateTime      @default(now()) @db.Timestamptz(3)
   invoice       Invoice?
 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDateShort, formatEUR } from "@/lib/format";
 import { generateInvoiceFromBookingForm, cancelInvoice } from "@/actions/invoice";
 import { ManualInvoiceForm } from "@/components/admin/manual-invoice-form";
+import { SendReviewButton } from "@/components/admin/send-review-button";
 import { deposeSurcharge, deposeLabel } from "@/lib/depose";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,9 @@ export default async function FacturesPage() {
     prisma.invoice.findMany({
       orderBy: [{ year: "desc" }, { sequence: "desc" }],
       take: 200,
+      include: {
+        booking: { select: { id: true, clientEmail: true, reviewRequestSentAt: true } },
+      },
     }),
     prisma.booking.findMany({
       where: { status: "COMPLETED", invoice: null },
@@ -117,6 +121,12 @@ export default async function FacturesPage() {
                       >
                         PDF
                       </Link>
+                      {inv.booking?.clientEmail && (
+                        <SendReviewButton
+                          bookingId={inv.booking.id}
+                          sentAt={inv.booking.reviewRequestSentAt}
+                        />
+                      )}
                       {inv.status === "PAID" && (
                         <>
                           <Link

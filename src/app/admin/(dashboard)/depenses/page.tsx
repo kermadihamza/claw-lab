@@ -44,9 +44,13 @@ export default async function DepensesPage() {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="min-w-0 overflow-x-auto rounded-2xl border border-ink/10 lg:col-span-2">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead className="bg-ink/5 text-left">
+        <div className="order-1 lg:order-2">
+          <NewExpenseForm defaultAmount={settings ? Number(settings.loyerMensuel) : undefined} />
+        </div>
+
+        <div className="order-2 min-w-0 overflow-x-auto rounded-2xl border border-ink/10 lg:order-1 lg:col-span-2">
+          <table className="w-full sm:min-w-[560px] text-sm">
+            <thead className="hidden bg-ink/5 text-left sm:table-header-group">
               <tr>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Catégorie</th>
@@ -80,8 +84,6 @@ export default async function DepensesPage() {
             </tbody>
           </table>
         </div>
-
-        <NewExpenseForm defaultAmount={settings ? Number(settings.loyerMensuel) : undefined} />
       </div>
     </div>
   );

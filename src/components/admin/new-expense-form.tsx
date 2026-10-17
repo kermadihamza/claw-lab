@@ -117,7 +117,7 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
 
         <div>
           <span className="block text-sm">Facture (optionnel)</span>
-          <div
+          <label
             onDragOver={(e) => {
               e.preventDefault();
               setIsDragging(true);
@@ -128,9 +128,6 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
               setIsDragging(false);
               addFiles(e.dataTransfer.files);
             }}
-            onClick={() => inputRef.current?.click()}
-            role="button"
-            tabIndex={0}
             className={`mt-1 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-3 py-4 text-center transition-colors ${
               isDragging ? "border-ink bg-ink/5" : "border-ink/20 hover:border-ink/40"
             }`}
@@ -140,14 +137,14 @@ export function NewExpenseForm({ defaultAmount }: { defaultAmount?: number }) {
               type="file"
               multiple
               accept="application/pdf,image/*"
-              className="hidden"
+              className="sr-only"
               onChange={(e) => {
                 if (e.target.files) addFiles(e.target.files);
                 e.target.value = "";
               }}
             />
-            <p className="text-xs text-ink-light">Glisse une facture ici, ou clique pour choisir (PDF/image, 10 Mo max)</p>
-          </div>
+            <p className="text-xs text-ink-light">Glisse une facture ici, ou touche pour choisir (PDF/image, 10 Mo max)</p>
+          </label>
           {files.length > 0 && (
             <ul className="mt-2 space-y-1">
               {files.map((file, i) => (

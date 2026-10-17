@@ -1,7 +1,8 @@
 import { formatDateLong, formatEUR, formatTime } from "@/lib/format";
 
+/** Toujours le vrai domaine public, même si l'action est déclenchée depuis un serveur local en dev. */
 function siteUrl() {
-  return (process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.PUBLIC_SITE_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
 }
 
 function calendarUrl(bookingId: string) {
@@ -25,6 +26,17 @@ function instagramButtonHtml() {
   <a href="https://www.instagram.com/the_clawlab/" style="display:inline-block;background-color:#e2e5e8;color:#20242c;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;padding:12px 24px;border-radius:9999px;">
     📷 Suivre @the_clawlab
   </a>
+</p>`;
+}
+
+function reviewButtonHtml(reviewUrl: string) {
+  return `<p style="margin:24px 0 0;text-align:center;">
+  <a href="${reviewUrl}" style="display:inline-block;background-color:#4c6a97;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;padding:16px 32px;border-radius:9999px;box-shadow:0 8px 20px rgba(76,106,151,0.35);">
+    ⭐ Laisser un avis Google
+  </a>
+</p>
+<p style="margin:10px 0 0;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8a8f98;">
+  Ça prend 30 secondes, promis.
 </p>`;
 }
 
@@ -178,6 +190,67 @@ Un empêchement ? Merci de nous prévenir en annulant directement : ${cancelUrl(
             Un empêchement ? Merci de nous prévenir en annulant directement :
             <a href="${cancelUrl(bookingId)}" style="color:#4c6a97;">annuler ma réservation</a>.
           </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  return { subject, text, html };
+}
+
+export function reviewRequestEmail(params: { clientName: string; reviewUrl: string }) {
+  const { clientName, reviewUrl } = params;
+  const logoUrl = `${siteUrl()}/logo_clawlab.png`;
+  const subject = "⭐ Un petit mot pour nous, ça compte énormément — Claw lab";
+
+  const text = `Merci de votre visite, ${clientName} !
+
+Nous espérons que vous repartez avec de jolis ongles et le sourire. Si vous avez 30 secondes, un avis Google nous aiderait énormément à nous faire connaître :
+
+${reviewUrl}
+
+Merci du fond du cœur !
+L'équipe Claw Lab`;
+
+  const html = `<!doctype html>
+<html lang="fr">
+  <body style="margin:0;padding:32px 16px;background-color:#faf7f0;font-family:Georgia,'Times New Roman',serif;color:#20242c;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;">
+      <tr>
+        <td style="text-align:center;padding-bottom:24px;">
+          <img src="${logoUrl}" alt="Claw lab" width="72" height="72" style="border-radius:9999px;display:inline-block;" />
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align:center;">
+          <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#4c6a97;">
+            Merci de votre visite
+          </p>
+          <h1 style="margin:12px 0 0;font-size:28px;font-weight:700;color:#20242c;">Merci, ${clientName} !</h1>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid rgba(32,36,44,0.1);border-radius:16px;">
+            <tr>
+              <td style="padding:28px 24px;font-family:Arial,Helvetica,sans-serif;text-align:center;">
+                <p style="margin:0;font-size:24px;letter-spacing:4px;">⭐️⭐️⭐️⭐️⭐️</p>
+                <p style="margin:16px 0 0;font-size:14px;line-height:1.6;">
+                  Nous espérons que vous repartez avec de jolis ongles et le sourire.
+                  Un petit avis Google ne vous prendra que 30 secondes, et ça nous aide
+                  <strong>énormément</strong> à nous faire connaître.
+                </p>
+                ${reviewButtonHtml(reviewUrl)}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:28px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#454c5a;">
+          <p style="margin:0;">Merci du fond du cœur !</p>
+          <p style="margin:4px 0 0;text-transform:none;">L&apos;équipe Claw Lab</p>
         </td>
       </tr>
     </table>

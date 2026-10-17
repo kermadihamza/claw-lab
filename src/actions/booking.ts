@@ -9,6 +9,7 @@ import {
   sendBookingConfirmationEmail,
   sendNewBookingNotification,
   sendCancellationNotification,
+  sendReviewRequestEmail,
 } from "@/lib/mail";
 import {
   createCalendarEventForBooking,
@@ -282,6 +283,26 @@ export async function updateBookingStatus(
 
   revalidatePath("/admin/reservations");
   revalidatePath("/admin");
+}
+
+/** Déclenchée manuellement par l'admin (bouton "Demander un avis"), jamais automatiquement. */
+export async function sendReviewRequest(bookingId: string): Promise<{ ok: boolean; error?: string }> {
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) return { ok: false, error: "Rendez-vous introuvable" };
+  if (!booking.clientEmail) return { ok: false, error: "Ce client n'a pas d'email enregistré" };
+
+  try {
+    await sendReviewRequestEmail({ to: booking.clientEmail, clientName: booking.clientName });
+  } catch (err) {
+    console.error("Échec de l'envoi de la demande d'avis:", err);
+    return { ok: false, error: "Échec de l'envoi de l'email" };
+  }
+
+  await prisma.booking.update({ where: { id: bookingId }, data: { reviewRequestSentAt: new Date() } });
+
+  revalidatePath("/admin/clients");
+  revalidatePath("/admin/reservations");
+  return { ok: true };
 }
 
 /** Annulation par la cliente elle-même, autorisée jusqu'à 24h avant le rendez-vous. */
