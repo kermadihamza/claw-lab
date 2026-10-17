@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDateShort, formatEUR } from "@/lib/format";
@@ -78,8 +79,8 @@ export default async function FacturesPage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="min-w-0 overflow-x-auto rounded-2xl border border-ink/10 lg:col-span-2">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-ink/5 text-left">
+          <table className="w-full sm:min-w-[640px] text-sm">
+            <thead className="hidden bg-ink/5 text-left sm:table-header-group">
               <tr>
                 <th className="px-4 py-3">Numéro</th>
                 <th className="px-4 py-3">Date</th>
@@ -97,53 +98,81 @@ export default async function FacturesPage() {
                   </td>
                 </tr>
               )}
-              {invoices.map((inv) => (
-                <tr key={inv.id} className="border-t border-ink/10">
-                  <td className="px-4 py-3 font-medium">{inv.number}</td>
-                  <td className="px-4 py-3">{formatDateShort(inv.issueDate)}</td>
-                  <td className="px-4 py-3">{inv.clientName}</td>
-                  <td className="px-4 py-3">{formatEUR(inv.totalAmount as unknown as string)}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
-                        inv.status === "PAID" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}
+              {invoices.map((inv) => {
+                const statusBadge = (
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      inv.status === "PAID" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {inv.status === "PAID" ? "Payée" : "Annulée"}
+                  </span>
+                );
+                const actions = (
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      href={`/api/factures/${inv.id}/pdf`}
+                      target="_blank"
+                      className="text-xs font-medium text-ink underline"
                     >
-                      {inv.status === "PAID" ? "Payée" : "Annulée"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-3">
-                      <Link
-                        href={`/api/factures/${inv.id}/pdf`}
-                        target="_blank"
-                        className="text-xs font-medium text-ink underline"
-                      >
-                        PDF
-                      </Link>
-                      {inv.booking?.clientEmail && (
-                        <SendReviewButton
-                          bookingId={inv.booking.id}
-                          sentAt={inv.booking.reviewRequestSentAt}
-                        />
-                      )}
-                      {inv.status === "PAID" && (
-                        <>
-                          <Link
-                            href={`/admin/factures/${inv.id}/edit`}
-                            className="text-xs font-medium text-ink underline"
-                          >
-                            Modifier
-                          </Link>
-                          <form action={cancelInvoice.bind(null, inv.id)}>
-                            <button className="text-xs font-medium text-red-700 underline">Annuler</button>
-                          </form>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      PDF
+                    </Link>
+                    {inv.booking?.clientEmail && (
+                      <SendReviewButton
+                        bookingId={inv.booking.id}
+                        sentAt={inv.booking.reviewRequestSentAt}
+                      />
+                    )}
+                    {inv.status === "PAID" && (
+                      <>
+                        <Link
+                          href={`/admin/factures/${inv.id}/edit`}
+                          className="text-xs font-medium text-ink underline"
+                        >
+                          Modifier
+                        </Link>
+                        <form action={cancelInvoice.bind(null, inv.id)}>
+                          <button className="text-xs font-medium text-red-700 underline">Annuler</button>
+                        </form>
+                      </>
+                    )}
+                  </div>
+                );
+                return (
+                  <Fragment key={inv.id}>
+                    {/* Carte mobile */}
+                    <tr className="border-t border-ink/10 sm:hidden">
+                      <td colSpan={6} className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium">{inv.number}</p>
+                            <p className="text-xs text-ink-light">
+                              {formatDateShort(inv.issueDate)} · {inv.clientName}
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="font-display text-base font-semibold">
+                              {formatEUR(inv.totalAmount as unknown as string)}
+                            </p>
+                            <div className="mt-1">{statusBadge}</div>
+                          </div>
+                        </div>
+                        <div className="mt-3">{actions}</div>
+                      </td>
+                    </tr>
+
+                    {/* Ligne desktop */}
+                    <tr className="hidden border-t border-ink/10 sm:table-row">
+                      <td className="px-4 py-3 font-medium">{inv.number}</td>
+                      <td className="px-4 py-3">{formatDateShort(inv.issueDate)}</td>
+                      <td className="px-4 py-3">{inv.clientName}</td>
+                      <td className="px-4 py-3">{formatEUR(inv.totalAmount as unknown as string)}</td>
+                      <td className="px-4 py-3">{statusBadge}</td>
+                      <td className="px-4 py-3">{actions}</td>
+                    </tr>
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

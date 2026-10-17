@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDateShort, formatTime } from "@/lib/format";
@@ -100,8 +101,8 @@ export default async function ClientsPage({
 
       <div className="mt-6 grid gap-8 lg:grid-cols-3">
         <div className="min-w-0 overflow-x-auto rounded-2xl border border-ink/10 lg:col-span-2">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-ink/5 text-left">
+          <table className="w-full sm:min-w-[640px] text-sm">
+            <thead className="hidden bg-ink/5 text-left sm:table-header-group">
               <tr>
                 <th className="px-4 py-3">Client</th>
                 <th className="px-4 py-3">Contact</th>
@@ -124,30 +125,51 @@ export default async function ClientsPage({
                 const active = c.bookings.filter((b) => b.status !== "CANCELLED" && b.status !== "NO_SHOW").length;
                 const cancelled = c.bookings.filter((b) => b.status === "CANCELLED").length;
                 const noShow = c.bookings.filter((b) => b.status === "NO_SHOW").length;
-                return (
-                  <tr
-                    key={c.key}
-                    className={`border-t border-ink/10 ${selected?.key === c.key ? "bg-ink/5" : ""}`}
+                const rowBg = selected?.key === c.key ? "bg-ink/5" : "";
+                const historyLink = (
+                  <Link
+                    href={`/admin/clients?client=${encodeURIComponent(c.key)}${qParam}`}
+                    className="text-xs font-medium underline"
                   >
-                    <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3 text-ink-light">{c.email || c.phone || "—"}</td>
-                    <td className="px-4 py-3">{active}</td>
-                    <td className="px-4 py-3">
-                      {cancelled > 0 ? <span className="text-red-700">{cancelled}</span> : "0"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {noShow > 0 ? <span className="font-semibold text-amber-700">{noShow}</span> : "0"}
-                    </td>
-                    <td className="px-4 py-3">{formatDateShort(c.bookings[0].startTime)}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/clients?client=${encodeURIComponent(c.key)}${qParam}`}
-                        className="text-xs font-medium underline"
-                      >
-                        Historique
-                      </Link>
-                    </td>
-                  </tr>
+                    Historique
+                  </Link>
+                );
+                return (
+                  <Fragment key={c.key}>
+                    {/* Carte mobile */}
+                    <tr className={`border-t border-ink/10 sm:hidden ${rowBg}`}>
+                      <td colSpan={7} className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium">{c.name}</p>
+                            <p className="text-xs text-ink-light">{c.email || c.phone || "—"}</p>
+                          </div>
+                          <p className="shrink-0 text-xs text-ink-light">{formatDateShort(c.bookings[0].startTime)}</p>
+                        </div>
+                        <p className="mt-2 text-xs text-ink-light">
+                          {active} actif{active === 1 ? "" : "s"}
+                          {cancelled > 0 && <span className="text-red-700"> · {cancelled} annulé{cancelled === 1 ? "" : "s"}</span>}
+                          {noShow > 0 && <span className="font-semibold text-amber-700"> · {noShow} absence{noShow === 1 ? "" : "s"}</span>}
+                        </p>
+                        <div className="mt-2">{historyLink}</div>
+                      </td>
+                    </tr>
+
+                    {/* Ligne desktop */}
+                    <tr className={`hidden border-t border-ink/10 sm:table-row ${rowBg}`}>
+                      <td className="px-4 py-3 font-medium">{c.name}</td>
+                      <td className="px-4 py-3 text-ink-light">{c.email || c.phone || "—"}</td>
+                      <td className="px-4 py-3">{active}</td>
+                      <td className="px-4 py-3">
+                        {cancelled > 0 ? <span className="text-red-700">{cancelled}</span> : "0"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {noShow > 0 ? <span className="font-semibold text-amber-700">{noShow}</span> : "0"}
+                      </td>
+                      <td className="px-4 py-3">{formatDateShort(c.bookings[0].startTime)}</td>
+                      <td className="px-4 py-3">{historyLink}</td>
+                    </tr>
+                  </Fragment>
                 );
               })}
             </tbody>

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDateLong, formatTime } from "@/lib/format";
@@ -95,8 +96,8 @@ export default async function ReservationsPage({
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="min-w-0 lg:col-span-2">
           <div className="overflow-x-auto rounded-2xl border border-ink/10">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead className="bg-ink/5 text-left">
+            <table className="w-full sm:min-w-[640px] text-sm">
+              <thead className="hidden bg-ink/5 text-left sm:table-header-group">
                 <tr>
                   <th className="px-4 py-3">Heure</th>
                   <th className="px-4 py-3">Client</th>
@@ -113,19 +114,18 @@ export default async function ReservationsPage({
                     </td>
                   </tr>
                 )}
-                {bookings.map((b) => (
-                  <tr key={b.id} className="border-t border-ink/10">
-                    <td className="px-4 py-3">
-                      {formatTime(b.startTime)} - {formatTime(b.endTime)}
-                    </td>
-                    <td className="px-4 py-3">
+                {bookings.map((b) => {
+                  const clientInfo = (
+                    <>
                       <Link href={`/admin/clients?client=${encodeURIComponent(b.clientEmail || b.clientPhone || b.clientName)}`} className="font-medium hover:underline">
                         {b.clientName}
                       </Link>
                       <p className="text-xs text-ink-light">{b.clientPhone || b.clientEmail}</p>
                       {b.notes && <p className="mt-0.5 text-xs italic text-ink-light">« {b.notes} »</p>}
-                    </td>
-                    <td className="px-4 py-3">
+                    </>
+                  );
+                  const serviceInfo = (
+                    <>
                       {b.service.name}
                       {b.deposeType !== "NONE" && (
                         <p
@@ -136,47 +136,76 @@ export default async function ReservationsPage({
                           {deposeLabel(b.deposeType)}
                         </p>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_STYLES[b.status]}`}>
-                        {STATUS_LABELS[b.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Link href={`/admin/reservations/${b.id}/edit`} className="text-xs font-medium text-ink underline">
-                          Modifier
-                        </Link>
-                        {b.status === "CONFIRMED" && (
-                          <>
-                            <form action={updateBookingStatus.bind(null, b.id, "COMPLETED")}>
-                              <button className="text-xs font-medium text-green-700 underline">
-                                Terminé
-                              </button>
-                            </form>
-                            <form action={updateBookingStatus.bind(null, b.id, "NO_SHOW")}>
-                              <button className="text-xs font-medium text-gray-600 underline">
-                                Absent
-                              </button>
-                            </form>
-                            <form action={updateBookingStatus.bind(null, b.id, "CANCELLED")}>
-                              <button className="text-xs font-medium text-red-700 underline">
-                                Annuler
-                              </button>
-                            </form>
-                          </>
-                        )}
-                        {b.status !== "CONFIRMED" && (
-                          <form action={updateBookingStatus.bind(null, b.id, "CONFIRMED")}>
-                            <button className="text-xs font-medium text-blue-700 underline">
-                              Réactiver
+                    </>
+                  );
+                  const statusBadge = (
+                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_STYLES[b.status]}`}>
+                      {STATUS_LABELS[b.status]}
+                    </span>
+                  );
+                  const actions = (
+                    <div className="flex flex-wrap gap-2">
+                      <Link href={`/admin/reservations/${b.id}/edit`} className="text-xs font-medium text-ink underline">
+                        Modifier
+                      </Link>
+                      {b.status === "CONFIRMED" && (
+                        <>
+                          <form action={updateBookingStatus.bind(null, b.id, "COMPLETED")}>
+                            <button className="text-xs font-medium text-green-700 underline">
+                              Terminé
                             </button>
                           </form>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          <form action={updateBookingStatus.bind(null, b.id, "NO_SHOW")}>
+                            <button className="text-xs font-medium text-gray-600 underline">
+                              Absent
+                            </button>
+                          </form>
+                          <form action={updateBookingStatus.bind(null, b.id, "CANCELLED")}>
+                            <button className="text-xs font-medium text-red-700 underline">
+                              Annuler
+                            </button>
+                          </form>
+                        </>
+                      )}
+                      {b.status !== "CONFIRMED" && (
+                        <form action={updateBookingStatus.bind(null, b.id, "CONFIRMED")}>
+                          <button className="text-xs font-medium text-blue-700 underline">
+                            Réactiver
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  );
+                  return (
+                    <Fragment key={b.id}>
+                      {/* Carte mobile */}
+                      <tr className="border-t border-ink/10 sm:hidden">
+                        <td colSpan={5} className="px-4 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-medium">
+                              {formatTime(b.startTime)} - {formatTime(b.endTime)}
+                            </p>
+                            {statusBadge}
+                          </div>
+                          <div className="mt-2">{clientInfo}</div>
+                          <div className="mt-2 text-sm">{serviceInfo}</div>
+                          <div className="mt-3">{actions}</div>
+                        </td>
+                      </tr>
+
+                      {/* Ligne desktop */}
+                      <tr className="hidden border-t border-ink/10 sm:table-row">
+                        <td className="px-4 py-3">
+                          {formatTime(b.startTime)} - {formatTime(b.endTime)}
+                        </td>
+                        <td className="px-4 py-3">{clientInfo}</td>
+                        <td className="px-4 py-3">{serviceInfo}</td>
+                        <td className="px-4 py-3">{statusBadge}</td>
+                        <td className="px-4 py-3">{actions}</td>
+                      </tr>
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
